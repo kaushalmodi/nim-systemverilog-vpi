@@ -1,0 +1,30 @@
+# https://stackoverflow.com/a/25592735/1219634
+
+# Ignore all
+*
+
+# Unignore all with extensions
+!*.*
+
+# Unignore all dirs
+!*/
+
+# Unignore few files
+!LICENSE
+!makefile
+!Makefile
+
+xcelium.d/
+*.log
+*.so
+*.history
+.nimcache/
+sigusrdump.out
+work/
+xrun.key
+*.o
+*.a
+.bpad/
+.simvision/
+bpad*.err
+waves.shm/
