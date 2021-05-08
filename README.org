@@ -1,0 +1,14 @@
+#+title: Nim + SystemVerilog + VPI
+#+author: Kaushal Modi
+
+This repo contains SystemVerilog VPI examples that I found in the
+wild, translated to Nim, and then many examples of my own that show
+the Nim/SystemVerilog interface via VPI.
+
+* Requirements
+User needs to have access to some SystemVerilog simulator supporting
+VPI, like Cadence Xcelium.
+* Versions tested
+- Cadence Xcelium :: 20.09-s09
+- OS :: CentOS 7.6
+- Nim :: 1.5.1 as of 2021-04-30 Fri.
