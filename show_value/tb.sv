@@ -1,4 +1,4 @@
-// Time-stamp: <2021-05-10 02:20:25 kmodi>
+// Time-stamp: <2021-05-10 02:45:45 kmodi>
 
 `timescale 1ns/1ns
 
@@ -27,6 +27,7 @@ module top;
     ci = 0;
     #10 a = 1;
     #10 b = 1;
+    // $show_value; // will cause compilation error
     // $show_value(); // will cause compilation error
     // $show_value(sum, 123); // will cause compilation error
     // $show_value(123); // will cause compilation error
