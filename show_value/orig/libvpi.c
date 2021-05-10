@@ -12,6 +12,7 @@ int PLIbook_ShowVal_compiletf(char *user_data)
     if (systf_handle == NULL) {
         vpi_printf("ERROR: $show_value failed to obtain systf handle\n");
         tf_dofinish(); /* abort simulation */
+        /* vpi_control(vpiFinish, 1); */
         return(0);
     }
 
@@ -20,6 +21,7 @@ int PLIbook_ShowVal_compiletf(char *user_data)
     if (arg_iterator == NULL) {
         vpi_printf("ERROR: $show_value requires 1 argument\n");
         tf_dofinish(); /* abort simulation */
+        /* vpi_control(vpiFinish, 1); */
         return(0);
     }
 
@@ -30,6 +32,7 @@ int PLIbook_ShowVal_compiletf(char *user_data)
         vpi_printf("ERROR: $show_value arg must be a net or reg\n");
         vpi_free_object(arg_iterator); /* free iterator memory */
         tf_dofinish(); /* abort simulation */
+        /* vpi_control(vpiFinish, 1); */
         return (0);
     }
 
@@ -39,6 +42,7 @@ int PLIbook_ShowVal_compiletf(char *user_data)
         vpi_printf("ERROR: $show_value can only have 1 argument\n");
         vpi_free_object(arg_iterator); /* free iterator memory */
         tf_dofinish(); /* abort simulation */
+        /* vpi_control(vpiFinish, 1); */
         return(0);
     }
     return(0);

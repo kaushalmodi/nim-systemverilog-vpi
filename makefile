@@ -1,4 +1,4 @@
-# Time-stamp: <2021-05-07 14:15:50 kmodi>
+# Time-stamp: <2021-05-10 08:17:17 kmodi>
 # Author    : Kaushal Modi
 
 UVM ?= 0
@@ -118,7 +118,7 @@ endif
 # -I$(XCELIUM_ROOT)/../include for "vpi_user.h"
 clibvpi:
 	@find . \( -name libvpi.o -o -name $(NIM_SO) \) -delete
-	gcc -c -fPIC -I$(XCELIUM_ROOT)/../include libvpi.c $(GCC_ARCH_FLAG) -o libvpi.o
+	gcc -c -fPIC -I$(XCELIUM_ROOT)/../include -DVPI_COMPATIBILITY_VERSION_1800v2009 libvpi.c $(GCC_ARCH_FLAG) -o libvpi.o
 	gcc -shared -Wl,-soname,$(DEFAULT_SV_LIB) $(GCC_ARCH_FLAG) -o $(NIM_SO) libvpi.o
 	@rm -f libvpi.o
 
