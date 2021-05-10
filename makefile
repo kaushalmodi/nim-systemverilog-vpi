@@ -1,4 +1,4 @@
-# Time-stamp: <2021-05-10 08:17:17 kmodi>
+# Time-stamp: <2021-05-10 08:28:16 kmodi>
 # Author    : Kaushal Modi
 
 UVM ?= 0
@@ -107,6 +107,7 @@ ifeq ($(NC_CLEAN), 1)
 endif
 	xrun -sv $(NC_ARCH_FLAGS) \
 	  -timescale 1ns/10ps \
+	  -vpicompat vpi1800v2009 \
 	  +define+SHM_DUMP -debug \
 	  +define+$(DEFINES) \
 	  $(FILES) \
