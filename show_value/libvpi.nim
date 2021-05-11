@@ -5,7 +5,7 @@ proc show_value() =
   proc compiletfShowValue(s: cstring): cint {.cdecl.} =
     # Obtain a handle to the system task instance.
     let
-      systfHandle = get_vpi_handle(vpiSysTfCall, nil)
+      systfHandle = vpi_handle(vpiSysTfCall, nil)
     if systfHandle == nil:
       vpiEcho("ERROR: $show_value failed to obtain systf handle")
       # FIXME: -- Mon May 10 02:17:38 EDT 2021 - kmodi
@@ -49,7 +49,7 @@ proc show_value() =
   proc calltfShowValue(s: cstring): cint {.cdecl.} =
     # Obtain a handle to the system task instance.
     let
-      systfHandle = get_vpi_handle(vpiSysTfCall, nil)
+      systfHandle = vpi_handle(vpiSysTfCall, nil)
 
     # Obtain handle to system task argument.  compiletf has already
     # verified only 1 arg with correct type.
