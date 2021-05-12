@@ -20,8 +20,8 @@ proc show_value() =
       vpiEcho("ERROR: $show_value requires 1 argument")
       # FIXME: -- Mon May 10 02:17:38 EDT 2021 - kmodi
       # vpi_control doesn't seem to work
-      # return vpi_control(vpiFinish, 1)
-      return tf_dofinish()
+      return vpi_control(vpiFinish, 1)
+      # return tf_dofinish()
 
     # Check the type of object in system task arguments.
     var
