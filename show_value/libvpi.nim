@@ -8,20 +8,16 @@ proc show_value() =
       systfHandle = vpi_handle(vpiSysTfCall, nil)
     if systfHandle == nil:
       vpiEcho("ERROR: $show_value failed to obtain systf handle")
-      # FIXME: -- Mon May 10 02:17:38 EDT 2021 - kmodi
-      # vpi_control doesn't seem to work
-      # return vpi_control(vpiFinish, 1)
-      return tf_dofinish()
+      vpiQuit()
+      return
 
     # Obtain handles to system task arguments.
     let
       argIterator = vpi_iterate(vpiArgument, systfHandle)
     if argIterator == nil:
       vpiEcho("ERROR: $show_value requires 1 argument")
-      # FIXME: -- Mon May 10 02:17:38 EDT 2021 - kmodi
-      # vpi_control doesn't seem to work
-      # return vpi_control(vpiFinish, 1)
-      return tf_dofinish()
+      vpiQuit()
+      return
 
     # Check the type of object in system task arguments.
     var
@@ -31,20 +27,16 @@ proc show_value() =
     if argType notin {vpiNet, vpiReg}:
       vpiEcho("ERROR: $show_value arg must be a net or reg")
       discard vpi_free_object(argIterator) # free iterator memory
-      # FIXME: -- Mon May 10 02:17:38 EDT 2021 - kmodi
-      # vpi_control doesn't seem to work
-      # return vpi_control(vpiFinish, 1)
-      return tf_dofinish()
+      vpiQuit()
+      return
 
     # Check that there are no more system task arguments.
     argHandle = vpi_scan(argIterator)
     if argHandle != nil:
       vpiEcho("ERROR: $show_value can only have 1 argument")
       discard vpi_free_object(argIterator) # free iterator memory
-      # FIXME: -- Mon May 10 02:17:38 EDT 2021 - kmodi
-      # vpi_control doesn't seem to work
-      # return vpi_control(vpiFinish, 1)
-      return tf_dofinish()
+      vpiQuit()
+      return
 
   proc calltfShowValue(s: cstring): cint {.cdecl.} =
     # Obtain a handle to the system task instance.
