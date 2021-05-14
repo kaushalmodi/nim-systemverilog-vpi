@@ -1,8 +1,8 @@
 import std/[strformat]
 import svvpi
 
-proc show_value() =
-  proc compiletfShowValue(s: cstring): cint {.cdecl.} =
+vpiDefine task show_value:
+  compiletf:
     # Obtain a handle to the system task instance.
     let
       systfHandle = vpi_handle(vpiSysTfCall, nil)
@@ -38,7 +38,7 @@ proc show_value() =
       vpiQuit()
       return
 
-  proc calltfShowValue(s: cstring): cint {.cdecl.} =
+  calltf:
     # Obtain a handle to the system task instance.
     let
       systfHandle = vpi_handle(vpiSysTfCall, nil)
@@ -55,13 +55,5 @@ proc show_value() =
       currentValue = s_vpi_value(format: vpiBinStrVal) # read value as a string
     vpi_get_value(netHandle, addr currentValue)
     vpiEcho &"Signal {vpi_get_str(vpiFullName, netHandle)} has the value {currentValue.value.str}"
-
-  var
-    taskDataObj = s_vpi_systf_data(`type`: vpiSysTask,
-                                   tfname: "$show_value",
-                                   compiletf: compiletfShowValue,
-                                   calltf: calltfShowValue,
-                                   sizetf: nil)
-  discard vpi_register_systf(addr taskDataObj)
 
 setVlogStartupRoutines(show_value)
