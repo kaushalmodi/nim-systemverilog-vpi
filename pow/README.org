@@ -1,0 +1,4 @@
+#+title: The Verilog PLI Handbook: $pow
+
+This directory contains the Nim and original C versions of the ~$pow~
+example from chapter 2 of /The Verilog PLI Handbook/.

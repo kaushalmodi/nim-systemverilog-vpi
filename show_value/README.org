@@ -1,0 +1,4 @@
+#+title: The Verilog PLI Handbook: $show_value
+
+This directory contains the Nim and original C versions of the
+~$show_value~ example from chapter 1 of /The Verilog PLI Handbook/.

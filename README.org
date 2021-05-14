@@ -14,11 +14,25 @@ do:
 #+begin_example
 nimble install https://github.com/kaushalmodi/nim-svvpi
 #+end_example
+
 * Running the examples in this repo
 - To run the default Nim/SV examples, cd to each subdirectory and run ~make~.
 - Some examples also have C/SV examples in an ~orig/~ subdirectory
   under there. To run those, cd to that ~orig/~ directory and then run
   ~make~.
+
+* Authors
+Unless stated otherwise, all C examples in this repo and most of the
+SystemVerilog test benches are originally authored by Stuart
+Sutherland (sourced from /The Verilog PLI Handbook/).
+
+All Nim examples are authored by Kaushal Modi. The C and SystemVerilog
+test benches could also be altered to improve the examples
+functionally, or just for coding consistency.
+* References
+- *The Verilog PLI Handbook* by Stuart Sutherland -- [[https://link.springer.com/book/10.1007/b116513][SpringerLink]] | [[https://sutherland-hdl.com/books_and_guides.html#PLI%20Handbook][Author's homepage]]
+- [[https://sutherland-hdl.com/books/pli_book_files/pli_handbook_examples_unix.tar][C examples from /The Verilog PLI Handbook/]]
+
 * Versions tested
 - Cadence Xcelium :: 20.09-s09
 - OS :: CentOS 7.6

@@ -15,8 +15,7 @@ proc hello() =
                                    userdata: nil)
   discard vpi_register_systf(addr taskDataObj)
 
-# Below does the same thing as above but using the vpiDefineTask
-# macro.
+# Below does a similar thing as above but using the vpiDefine macro.
 vpiDefine task bye:
   calltf:
     vpiEcho "Bye!"

@@ -2,8 +2,3 @@
 
 This directory contains the "Hello" example from [[https://www.asic-world.com/verilog/pli6.html][this asic-world PLI
 tutorial]] translated from C to Nim.
-
-- To run the Nim code with SystemVerilog, run ~make~ in this
-  directory.
-- To run the original C code from the tutorial, cd to the ~orig/~
-  directory in here, and run ~make~ there.
