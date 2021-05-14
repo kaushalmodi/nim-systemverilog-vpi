@@ -8,6 +8,17 @@ the Nim/SystemVerilog interface via VPI.
 * Requirements
 User needs to have access to some SystemVerilog simulator supporting
 VPI, like Cadence Xcelium.
+
+All examples in this repo use the Nim [[https://github.com/kaushalmodi/nim-svvpi][~svvpi~]] package. To install it,
+do:
+#+begin_example
+nimble install https://github.com/kaushalmodi/nim-svvpi
+#+end_example
+* Running the examples in this repo
+- To run the default Nim/SV examples, cd to each subdirectory and run ~make~.
+- Some examples also have C/SV examples in an ~orig/~ subdirectory
+  under there. To run those, cd to that ~orig/~ directory and then run
+  ~make~.
 * Versions tested
 - Cadence Xcelium :: 20.09-s09
 - OS :: CentOS 7.6

@@ -1,0 +1,21 @@
+#+title: Use of sizetf, sysfunctype and user_data
+
+This example shows how the ~s_vpi_systf_data~ struct's ~sizetf~,
+~sysfunctype~ and ~user_data~ fields are updated and how they interact
+with the SV test bench.
+
+The example uses the ~vpiDefine~ macro from the Nim package [[https://github.com/kaushalmodi/nim-svvpi][~svvpi~]] to
+make the code concise and easier to maintain.
+
+* Output
+#+begin_example
+xcelium> run
+val = 1, size = 1
+val = 3, size = 2
+val = 255, size = 8
+val = -1, size = 8
+val = 1000000, size = 32
+Simulation complete via $finish(1) at time 0 FS + 1
+./tb.sv:12     $finish;
+xcelium> exit
+#+end_example
