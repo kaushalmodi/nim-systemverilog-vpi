@@ -74,4 +74,16 @@ vpiDefine function pow:
 
   sizetf: 32 # $pow returns 32-bit values
 
+  more:
+    proc startOfSim(cbDataPtr: ptr s_cb_data): cint {.cdecl.} =
+      vpiEcho "\n$pow PLI application is being used.\n"
+
+    var
+      cbData = s_cb_data(reason: cbStartOfSimulation,
+                         cb_rtn: startOfSim)
+    let
+      cbHandle = vpi_register_cb(addr cbData)
+    discard vpi_release_handle(cbHandle) # Don’t need callback handle
+
+
 setVlogStartupRoutines(pow)
