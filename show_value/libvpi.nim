@@ -26,7 +26,7 @@ vpiDefine task show_value:
       argType = vpi_get(vpiType, argHandle)
     if argType notin {vpiNet, vpiReg}:
       vpiEcho("ERROR: $show_value arg must be a net or reg")
-      discard vpi_free_object(argIterator) # free iterator memory
+      discard vpi_release_handle(argIterator) # free iterator memory
       vpiQuit()
       return
 
@@ -34,7 +34,7 @@ vpiDefine task show_value:
     argHandle = vpi_scan(argIterator)
     if argHandle != nil:
       vpiEcho("ERROR: $show_value can only have 1 argument")
-      discard vpi_free_object(argIterator) # free iterator memory
+      discard vpi_release_handle(argIterator) # free iterator memory
       vpiQuit()
       return
 
@@ -48,7 +48,7 @@ vpiDefine task show_value:
     let
       argIterator = vpi_iterate(vpiArgument, systfHandle)
       netHandle = vpi_scan(argIterator)
-    discard vpi_free_object(argIterator) # free iterator memory
+    discard vpi_release_handle(argIterator) # free iterator memory
 
     # Read current value.
     var
