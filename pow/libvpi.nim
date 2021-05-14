@@ -2,9 +2,6 @@ import std/[strformat]
 from std/math import nil # To prevent clash between math.pow and the pow proc we define below.
 import svvpi
 
-const
-  powNumArgs = 2
-
 type
   VpiTfError = object of Exception
 
@@ -15,6 +12,10 @@ proc quitOnException(systfHandle: VpiHandle) =
   vpiQuit()
 
 vpiDefine function pow:
+  setup:
+    const
+      numArgs = 2
+
   compiletf:
     var
       systfHandle: VpiHandle
@@ -23,19 +24,19 @@ vpiDefine function pow:
       let
         argIterator = vpi_iterate(vpiArgument, systfHandle)
       if argIterator == nil:
-        raise newException(VpiTfError, &"$pow requires {powNumArgs} arguments; has none")
+        raise newException(VpiTfError, &"$pow requires {numArgs} arguments; has none")
 
-      for i in 1 .. powNumArgs+1:
+      for i in 1 .. numArgs+1:
         var
           argHandle = vpi_scan(argIterator)
 
-        if i <= powNumArgs:
+        if i <= numArgs:
           if argHandle == nil:
             raise newException(VpiTfError, &"$pow requires arg {i}")
         else:
           if argHandle != nil:
             discard vpi_release_handle(argIterator) # free iterator memory
-            raise newException(VpiTfError, &"$pow requires {powNumArgs} arguments; has too many")
+            raise newException(VpiTfError, &"$pow requires {numArgs} arguments; has too many")
           break
 
         let
@@ -56,10 +57,10 @@ vpiDefine function pow:
         base, exp: cint
         argValue = s_vpi_value(format: vpiIntVal)
 
-      for i in 1 .. powNumArgs:
+      for i in 1 .. numArgs:
         var
           argHandle = vpi_scan(argIterator)
-        if i == powNumArgs:
+        if i == numArgs:
           # Release the memory after the last arg is scanned.
           discard vpi_release_handle(argIterator)
 
