@@ -2,6 +2,9 @@ import std/[strformat]
 from std/math import nil # To prevent clash between math.pow and the pow proc we define below.
 import svvpi
 
+const
+  powNumArgs = 2
+
 type
   VpiTfError = object of Exception
 
@@ -20,19 +23,19 @@ vpiDefine function pow:
       let
         argIterator = vpi_iterate(vpiArgument, systfHandle)
       if argIterator == nil:
-        raise newException(VpiTfError, "$pow requires 2 arguments; has none")
+        raise newException(VpiTfError, &"$pow requires {powNumArgs} arguments; has none")
 
-      for i in 1 .. 3:
+      for i in 1 .. powNumArgs+1:
         var
           argHandle = vpi_scan(argIterator)
 
-        if i <= 2:
+        if i <= powNumArgs:
           if argHandle == nil:
             raise newException(VpiTfError, &"$pow requires arg {i}")
         else:
           if argHandle != nil:
             discard vpi_release_handle(argIterator) # free iterator memory
-            raise newException(VpiTfError, "$pow requires 2 arguments; has too many")
+            raise newException(VpiTfError, &"$pow requires {powNumArgs} arguments; has too many")
           break
 
         let
@@ -53,18 +56,18 @@ vpiDefine function pow:
         base, exp: cint
         argValue = s_vpi_value(format: vpiIntVal)
 
-      for i in 0 .. 1:
+      for i in 1 .. powNumArgs:
         var
           argHandle = vpi_scan(argIterator)
-        if i == 1:
+        if i == powNumArgs:
           # Release the memory after the last arg is scanned.
           discard vpi_release_handle(argIterator)
 
         vpi_get_value(argHandle, addr argValue)
-        if i == 0:
-          base = argValue.value.integer
-        else:
-          exp = argValue.value.integer
+        case i
+        of 1: base = argValue.value.integer
+        of 2: exp = argValue.value.integer
+        else: discard
 
       # Write result to simulation as return value $pow
       argValue.value.integer = math.pow(base.float, exp.float).cint
