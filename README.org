@@ -32,7 +32,7 @@ functionally, or just for coding consistency.
 * References
 - *The Verilog PLI Handbook* by Stuart Sutherland -- [[https://link.springer.com/book/10.1007/b116513][SpringerLink]] | [[https://sutherland-hdl.com/books_and_guides.html#PLI%20Handbook][Author's homepage]]
 - [[https://sutherland-hdl.com/books/pli_book_files/pli_handbook_examples_unix.tar][C examples from /The Verilog PLI Handbook/]]
-
+- Cadence Xcelium VPI examples in ~${XCELIUM_ROOT}/../inca/examples/vpi/~
 * Versions tested
 - Cadence Xcelium :: 20.09-s09
 - OS :: CentOS 7.6

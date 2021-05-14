@@ -1,0 +1,5 @@
+#+title: $walk_hierarchy
+
+This directory contains a Nim/VPI implementation of
+~$walk_hierarchy~. It's inspired from the ~hier_walker~ VPI example in
+~${XCELIUM_ROOT}/../inca/examples/vpi/hier_walker/~.
