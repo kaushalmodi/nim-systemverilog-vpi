@@ -5,6 +5,7 @@ module top;
   tri [1:0] results;
 
   addbit i1 (test[0], test[1], test[2], results[0], results[1]);
+  no_nets u_no_nets();
 
   initial begin
     test = 3'b000;
@@ -12,6 +13,7 @@ module top;
 
     #10 $show_all_nets(top);
     #10 $show_all_nets(i1);
+    #10 $show_all_nets(u_no_nets);
 
     // #10 $stop;
     #10 $finish;
@@ -20,7 +22,7 @@ module top;
 endmodule : top
 
 // A gate level 1 bit adder model
-module addbit (a, b, ci, sum, co);
+module addbit(a, b, ci, sum, co);
   input a, b, ci;
   output sum, co;
 
@@ -31,5 +33,7 @@ module addbit (a, b, ci, sum, co);
   and    (n2, a, b);
   and    (n3, n1, ci);
   or  #2 (co, n2, n3);
-
 endmodule : addbit
+
+module no_nets();
+endmodule : no_nets

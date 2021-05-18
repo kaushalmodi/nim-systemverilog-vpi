@@ -22,9 +22,11 @@ vpiDefine task show_all_nets:
         moduleName = $vpi_get_str(vpiDefName, moduleHandle)
       vpiEcho &"\nAt time {currentTime.real:2.2f}, nets in module {instPath} ({moduleName}):"
       # Obtain handles to nets in module and read current value.
-      for netHandle, netIter in moduleHandle.vpiHandles2(vpiNet):
+      for netHandle, netIter in moduleHandle.vpiHandles2(vpiNet, allowNilYield = true):
         if netIter == nil:
           vpiEcho "  no nets found in this module"
+        elif netHandle == nil:
+          break
         else:
           var
             currentValue = s_vpi_value(format: vpiBinStrVal) # read values as a string
