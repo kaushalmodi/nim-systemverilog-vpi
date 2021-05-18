@@ -57,12 +57,8 @@ vpiDefine task show_all_signals:
         moduleName = $vpi_get_str(vpiDefName, moduleHandle)
       vpiEcho &"\nAt time {currentTime.real:2.2f}, signals in module {instPath} ({moduleName}):"
       # Obtain handles to signals in module and read current value.
-      for netHandle, _ in moduleHandle.vpiHandles2(vpiNet):
-        netHandle.printSignalValues()
-      for regHandle, _ in moduleHandle.vpiHandles2(vpiReg):
-        regHandle.printSignalValues()
-      for varHandle, _ in moduleHandle.vpiHandles2(vpiVariables):
-        varHandle.printSignalValues()
+      for sigHandle, _ in moduleHandle.vpiHandles2([vpiNet, vpiReg, vpiVariables]):
+        sigHandle.printSignalValues()
 
 
 setVlogStartupRoutines(show_all_signals)
