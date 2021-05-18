@@ -3,21 +3,11 @@ import svvpi
 
 vpiDefine task show_value:
   compiletf:
-    # Obtain a handle to the system task instance.
-    let
-      systfHandle = vpi_handle(vpiSysTfCall, nil)
-    if systfHandle == nil:
-      vpiEcho &"ERROR: {tfName} failed to obtain systf handle"
-      vpiQuit()
-      return
-
     # Obtain handles to system task arguments.
     let
       argIterator = vpi_iterate(vpiArgument, systfHandle)
     if argIterator == nil:
-      vpiEcho &"ERROR: {tfName} requires 1 argument"
-      vpiQuit()
-      return
+      vpiException &"{tfName} requires 1 argument"
 
     # Check the type of object in system task arguments.
     var
@@ -25,24 +15,16 @@ vpiDefine task show_value:
     let
       argType = vpi_get(vpiType, argHandle)
     if argType notin {vpiNet, vpiReg}:
-      vpiEcho &"ERROR: {tfName} arg must be a net or reg"
       discard vpi_release_handle(argIterator) # free iterator memory
-      vpiQuit()
-      return
+      vpiException &"{tfName} arg must be a net or reg"
 
     # Check that there are no more system task arguments.
     argHandle = vpi_scan(argIterator)
     if argHandle != nil:
-      vpiEcho &"ERROR: {tfName} can only have 1 argument"
       discard vpi_release_handle(argIterator) # free iterator memory
-      vpiQuit()
-      return
+      vpiException &"{tfName} can only have 1 argument"
 
   calltf:
-    # Obtain a handle to the system task instance.
-    let
-      systfHandle = vpi_handle(vpiSysTfCall, nil)
-
     # Obtain handle to system task argument.  compiletf has already
     # verified only 1 arg with correct type.
     let

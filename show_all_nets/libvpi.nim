@@ -1,53 +1,36 @@
 import std/[strformat]
 import svvpi
 
-type
-  VpiTfError = object of Exception
-
-proc quitOnException(systfHandle: VpiHandle) =
-  let
-    lineNo = vpi_get(vpiLineNo, systfHandle)
-  vpiEcho &"ERROR: Line {lineNo}: {getCurrentExceptionMsg()}"
-  vpiQuit()
-
 vpiDefine task show_all_nets:
   setup:
     const
       numArgs = 1
 
   compiletf:
-    var
-      systfHandle: VpiHandle
-    try:
-      systfHandle = vpi_handle(vpiSysTfCall, nil)
+    let
+      argIter = vpi_iterate(vpiArgument, systfHandle)
+    if argIter == nil:
+      vpiException &"{tfName} requires {numArgs} arguments; has none"
+
+    for i in 1 .. numArgs+1:
+      var
+        argHandle = vpi_scan(argIter)
+
+      if i <= numArgs:
+        if argHandle == nil:
+          vpiException &"{tfName} requires arg {i}"
+      else:
+        if argHandle != nil:
+          discard vpi_release_handle(argIter) # free iterator memory
+          vpiException &"{tfName} requires {numArgs} arguments; has too many"
+        break
+
       let
-        argIter = vpi_iterate(vpiArgument, systfHandle)
-      if argIter == nil:
-        raise newException(VpiTfError, &"{tfName} requires {numArgs} arguments; has none")
-
-      for i in 1 .. numArgs+1:
-        var
-          argHandle = vpi_scan(argIter)
-
-        if i <= numArgs:
-          if argHandle == nil:
-            raise newException(VpiTfError, &"{tfName} requires arg {i}")
-        else:
-          if argHandle != nil:
-            discard vpi_release_handle(argIter) # free iterator memory
-            raise newException(VpiTfError, &"{tfName} requires {numArgs} arguments; has too many")
-          break
-
-        let
-          argType = vpi_get(vpiType, argHandle)
-        if argType notin {vpiModule}:
-          raise newException(VpiTfError, &"{tfName} arg {i} must be a module instance; its type was instead {argType}")
-    except VpiTfError:
-      systfHandle.quitOnException()
+        argType = vpi_get(vpiType, argHandle)
+      if argType notin {vpiModule}:
+        vpiException &"{tfName} arg {i} must be a module instance; its type was instead {argType}"
 
   calltf:
-    let
-      systfHandle = vpi_handle(vpiSysTfCall, nil)
     let
       argIter = vpi_iterate(vpiArgument, systfHandle)
       moduleHandle = vpi_scan(argIter)
