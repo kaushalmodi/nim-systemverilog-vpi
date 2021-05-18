@@ -1,0 +1,5 @@
+#+title: The Verilog PLI Handbook: $show_all_signals with scope
+
+This directory contains the Nim and original C versions of the
+~$show_all_signals~ version 2 from chapter 3 of /The Verilog PLI
+Handbook/.
