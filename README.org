@@ -23,8 +23,11 @@ nimble install https://github.com/kaushalmodi/nim-svvpi
 
 * Authors
 Unless stated otherwise, all C examples in this repo and most of the
-SystemVerilog test benches are originally authored by Stuart
+SystemVerilog test benches are originally authored by late Stuart
 Sutherland (sourced from /The Verilog PLI Handbook/).
+
+I have received the permission from Don Mills (~sutherland-hdl.com~)
+to post code from /The Verilog PLI Handbook/ in this repository.
 
 All Nim examples are authored by Kaushal Modi. The C and SystemVerilog
 test benches could also be altered to improve the examples
