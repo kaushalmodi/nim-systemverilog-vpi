@@ -1,8 +1,7 @@
 import svvpi
 
-proc returnInt(userData: cstring) =
+template returnInt(userData: cstring) =
   var
-    systfHandle = vpi_handle(vpiSysTfCall, nil)
     argValue = s_vpi_value(format: vpiIntVal)
   argValue.value.integer = case $userData
                            of "1-bit": 1
