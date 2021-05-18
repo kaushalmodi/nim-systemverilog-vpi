@@ -7,7 +7,7 @@ vpiDefine task show_value:
     let
       systfHandle = vpi_handle(vpiSysTfCall, nil)
     if systfHandle == nil:
-      vpiEcho("ERROR: $show_value failed to obtain systf handle")
+      vpiEcho &"ERROR: {tfName} failed to obtain systf handle"
       vpiQuit()
       return
 
@@ -15,7 +15,7 @@ vpiDefine task show_value:
     let
       argIterator = vpi_iterate(vpiArgument, systfHandle)
     if argIterator == nil:
-      vpiEcho("ERROR: $show_value requires 1 argument")
+      vpiEcho &"ERROR: {tfName} requires 1 argument"
       vpiQuit()
       return
 
@@ -25,7 +25,7 @@ vpiDefine task show_value:
     let
       argType = vpi_get(vpiType, argHandle)
     if argType notin {vpiNet, vpiReg}:
-      vpiEcho("ERROR: $show_value arg must be a net or reg")
+      vpiEcho &"ERROR: {tfName} arg must be a net or reg"
       discard vpi_release_handle(argIterator) # free iterator memory
       vpiQuit()
       return
@@ -33,7 +33,7 @@ vpiDefine task show_value:
     # Check that there are no more system task arguments.
     argHandle = vpi_scan(argIterator)
     if argHandle != nil:
-      vpiEcho("ERROR: $show_value can only have 1 argument")
+      vpiEcho &"ERROR: {tfName} can only have 1 argument"
       discard vpi_release_handle(argIterator) # free iterator memory
       vpiQuit()
       return

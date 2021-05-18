@@ -24,7 +24,7 @@ vpiDefine function pow:
       let
         argIterator = vpi_iterate(vpiArgument, systfHandle)
       if argIterator == nil:
-        raise newException(VpiTfError, &"$pow requires {numArgs} arguments; has none")
+        raise newException(VpiTfError, &"{tfName} requires {numArgs} arguments; has none")
 
       for i in 1 .. numArgs+1:
         var
@@ -32,17 +32,17 @@ vpiDefine function pow:
 
         if i <= numArgs:
           if argHandle == nil:
-            raise newException(VpiTfError, &"$pow requires arg {i}")
+            raise newException(VpiTfError, &"{tfName} requires arg {i}")
         else:
           if argHandle != nil:
             discard vpi_release_handle(argIterator) # free iterator memory
-            raise newException(VpiTfError, &"$pow requires {numArgs} arguments; has too many")
+            raise newException(VpiTfError, &"{tfName} requires {numArgs} arguments; has too many")
           break
 
         let
           argType = vpi_get(vpiType, argHandle)
         if argType notin {vpiReg, vpiIntegerVar, vpiConstant}:
-          raise newException(VpiTfError, &"$pow arg {i} must be a number, variable or net; its type was instead {argType}")
+          raise newException(VpiTfError, &"{tfName} arg {i} must be a number, variable or net; its type was instead {argType}")
     except VpiTfError:
       systfHandle.quitOnException()
 
@@ -80,7 +80,7 @@ vpiDefine function pow:
 
   more:
     proc startOfSim(cbDataPtr: ptr s_cb_data): cint {.cdecl.} =
-      vpiEcho "\n$pow PLI application is being used.\n"
+      vpiEcho &"\n{tfName} PLI application is being used.\n"
 
     var
       cbData = s_cb_data(reason: cbStartOfSimulation,

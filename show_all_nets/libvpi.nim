@@ -23,7 +23,7 @@ vpiDefine task show_all_nets:
       let
         argIter = vpi_iterate(vpiArgument, systfHandle)
       if argIter == nil:
-        raise newException(VpiTfError, &"$show_all_nets requires {numArgs} arguments; has none")
+        raise newException(VpiTfError, &"{tfName} requires {numArgs} arguments; has none")
 
       for i in 1 .. numArgs+1:
         var
@@ -31,17 +31,17 @@ vpiDefine task show_all_nets:
 
         if i <= numArgs:
           if argHandle == nil:
-            raise newException(VpiTfError, &"$show_all_nets requires arg {i}")
+            raise newException(VpiTfError, &"{tfName} requires arg {i}")
         else:
           if argHandle != nil:
             discard vpi_release_handle(argIter) # free iterator memory
-            raise newException(VpiTfError, &"$show_all_nets requires {numArgs} arguments; has too many")
+            raise newException(VpiTfError, &"{tfName} requires {numArgs} arguments; has too many")
           break
 
         let
           argType = vpi_get(vpiType, argHandle)
         if argType notin {vpiModule}:
-          raise newException(VpiTfError, &"$show_all_nets arg {i} must be a module instance; its type was instead {argType}")
+          raise newException(VpiTfError, &"{tfName} arg {i} must be a module instance; its type was instead {argType}")
     except VpiTfError:
       systfHandle.quitOnException()
 
