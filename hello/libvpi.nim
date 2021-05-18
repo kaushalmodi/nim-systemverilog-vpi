@@ -17,6 +17,8 @@ proc hello() =
 
 # Below does a similar thing as above but using the vpiDefine macro.
 vpiDefine task bye:
+  compiletf:
+    systfHandle.vpiNumArgCheck(0)
   calltf:
     vpiEcho "Bye!"
 
