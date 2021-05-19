@@ -18,6 +18,9 @@ vpiDefine function pow:
 
     for argIndex, argHandle in systfHandle.vpiArgs:
       vpi_get_value(argHandle, addr argValue)
+      vpiCheckError() # Check the status of the previous VPI API call; vpi_get_value in this case.
+      # Uncommenting the "$pow("abc", "def")" line in tb.sv will show the above proc in action.
+
       case argIndex
       of 0: base = argValue.value.integer
       of 1: exp = argValue.value.integer

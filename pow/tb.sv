@@ -1,4 +1,4 @@
-// Time-stamp: <2021-05-18 15:55:48 kmodi>
+// Time-stamp: <2021-05-19 13:15:04 kmodi>
 
 module top;
 
@@ -7,7 +7,7 @@ module top;
     // void'($pow);
     // void'($pow());
     // void'($pow(1));
-    // void'($pow("abc", "def"));
+    // void'($pow("abc", "def")); // VPI Compile: *E,NUMCNV (./tb.sv:10): The VPI routine vpi_get_value() cannot obtain a numeric value of an object for which vpiConstType is vpiStringConst.
     // void'($pow(1, 2, 3));
 
     $display("$pow(2, 3) = %p", $pow(2, 3));
