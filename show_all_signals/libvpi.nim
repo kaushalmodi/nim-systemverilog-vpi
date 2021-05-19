@@ -57,7 +57,10 @@ vpiDefine task show_all_signals:
         moduleName = $vpi_get_str(vpiDefName, moduleHandle)
       vpiEcho &"\nAt time {currentTime.real:2.2f}, signals in module {instPath} ({moduleName}):"
       # Obtain handles to signals in module and read current value.
-      for sigHandle, _ in moduleHandle.vpiHandles2([vpiNet, vpiReg, vpiVariables]):
+      # Note that IEEE 1800-2005 onwards, vpiVariables includes vpiReg
+      # and vpiRegArrays. See section "36.12.1 VPI Incompatibilities
+      # with other standard versions" of IEEE 1800-2017.
+      for sigHandle, _ in moduleHandle.vpiHandles2([vpiNet, vpiVariables]):
         sigHandle.printSignalValues()
 
 
