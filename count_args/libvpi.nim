@@ -6,10 +6,7 @@ vpiDefine task count_args:
   calltf:
     var
       argCount = 0
-    for _, argHandle in systfHandle.vpiArgs(checkError = true):
-      # I am not sure if the below vpi_release_handle call is needed,
-      # but adding it anyways as the original C code has it.
-      discard argHandle.vpi_release_handle()
+    for _, _ in systfHandle.vpiArgs(checkError = true):
       inc argCount
     vpiEcho &"{tfName} on line {vpi_get(vpiLineNo, systfHandle)} has {argCount} arguments."
 
