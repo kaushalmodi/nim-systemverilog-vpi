@@ -136,11 +136,9 @@ PLI_INT32 PLIbook_ShowSignals_calltf(PLI_BYTE8 *user_data)
       PLIbook_PrintSignalValues(signal_iterator);
   }
 
-  /* obtain handles to regs in scope and read current value */
-  signal_iterator = vpi_iterate(vpiReg, scope_handle);
-  if (signal_iterator != NULL)
-    PLIbook_PrintSignalValues(signal_iterator);
-
+  // Note that IEEE 1800-2005 onwards, vpiVariables includes vpiReg
+  // and vpiRegArrays. See section "36.12.1 VPI Incompatibilities
+  // with other standard versions" of IEEE 1800-2017.
   /* obtain handles to variables in scope and read current value */
   signal_iterator = vpi_iterate(vpiVariables, scope_handle);
   if (signal_iterator != NULL)
