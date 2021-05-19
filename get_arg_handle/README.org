@@ -1,0 +1,5 @@
+#+title: The Verilog PLI Handbook: $get_arg_handle_test
+
+This directory contains the Nim and original C versions of the
+~$get_arg_handle_test~ example from chapter 4 of /The Verilog PLI
+Handbook/.
