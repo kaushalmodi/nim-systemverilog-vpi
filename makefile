@@ -1,4 +1,4 @@
-# Time-stamp: <2021-05-10 08:28:16 kmodi>
+# Time-stamp: <2021-05-18 21:59:00 kmodi>
 # Author    : Kaushal Modi
 
 UVM ?= 0
@@ -51,6 +51,9 @@ clean:
 	  core.* simv* csrc* *.tmp *.vpd *.key log temp .vcs* DVE* *~ \
 	  INCA_libs xcelium.d *.o ./.nimcache sigusrdump.out \
 	  .bpad/ bpad*.err
+
+clean2: clean
+	rm -rf *.so
 
 # libvpi.nim -> libvpi.c -> $(DEFAULT_VPI_LIB)
 # --gc:none is needed else Nim tries to free memory allocated for
