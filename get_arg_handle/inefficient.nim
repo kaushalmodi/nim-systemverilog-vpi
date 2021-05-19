@@ -1,3 +1,6 @@
+# This version is inefficient because the vpi_iterate and vpi_scan are
+# called each time this function is called.
+
 import std/[strformat]
 import svvpi
 
