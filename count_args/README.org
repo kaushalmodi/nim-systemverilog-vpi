@@ -1,0 +1,5 @@
+#+title: $count_args
+
+This directory contains a Nim/VPI implementation of
+~$count_args~. It's inspired from the ~count_args~ VPI example in
+~${XCELIUM_ROOT}/../inca/examples/vpi/count_args/~.
