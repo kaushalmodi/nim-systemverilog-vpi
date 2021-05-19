@@ -8,7 +8,7 @@ vpiDefine task show_value:
       let
         argType = vpi_get(vpiType, argHandle)
       if argType notin {vpiNet, vpiReg}:
-        vpiException &"{tfName} arg {argIndex} must be a net or reg, but its type was {argType}"
+        vpiException &"Arg {argIndex} must be a net or reg, but its type was {argType}"
 
   calltf:
     for _, netHandle in systfHandle.vpiArgs:

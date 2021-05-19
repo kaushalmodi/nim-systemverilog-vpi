@@ -9,7 +9,7 @@ vpiDefine function pow:
       let
         argType = vpi_get(vpiType, argHandle)
       if argType notin {vpiReg, vpiIntegerVar, vpiConstant}:
-        vpiException &"{tfName} arg {argIndex} must be a number, variable or net, but its type was {argType}"
+        vpiException &"Arg {argIndex} must be a number, variable or net, but its type was {argType}"
 
   calltf:
     var

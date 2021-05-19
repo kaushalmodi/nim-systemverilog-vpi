@@ -8,7 +8,7 @@ vpiDefine task show_all_nets:
       let
         argType = vpi_get(vpiType, argHandle)
       if argType notin {vpiModule}:
-        vpiException &"{tfName} arg {argIndex} must be a module instance, but its type was {argType}"
+        vpiException &"Arg {argIndex} must be a module instance, but its type was {argType}"
 
   calltf:
     # Read current simulation time.

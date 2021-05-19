@@ -17,9 +17,9 @@ vpiDefine task show_all_signals:
           opType = vpi_get(vpiOpType, argHandle)
         if opType == vpiNullOp:
           continue
-        vpiException &"{tfName} arg {argIndex} type was vpiOperation, but the op type was not vpiNullOp, it was {opType}"
+        vpiException &"Arg {argIndex} type was vpiOperation, but the op type was not vpiNullOp, it was {opType}"
       else:
-        vpiException &"{tfName} arg {argIndex} type must be a scope instance or null, but it was {argType}"
+        vpiException &"Arg {argIndex} type must be a scope instance or null, but it was {argType}"
 
   calltf:
     # Read current simulation time.
