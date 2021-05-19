@@ -30,13 +30,17 @@ vpiDefine task show_all_signals:
       var
         scopeHandle: VpiHandle
       if argIter == nil:
+        # no arguments -- use scope that called this application
         scopeHandle = systfHandle.vpi_handle(vpiScope)
       elif argHandle == nil:
+        # quit the iteration if we end up with a nil argHandle
         break
       else:
         if vpi_get(vpiType, argHandle) in {vpiOperation}:
+          # null task -- use scope that called this application
           scopeHandle = systfHandle.vpi_handle(vpiScope)
         else:
+          # .. otherwise, use the scope from the argument
           scopeHandle = argHandle
 
       let
