@@ -22,5 +22,6 @@ vpiDefine task bye:
   calltf:
     vpiEcho "Bye!"
 
-# Register the tasks.
-setVlogStartupRoutines(hello, bye)
+when not defined(dontSetStartupRoutinesInLibs):
+  # Register the tasks.
+  setVlogStartupRoutines(hello, bye)
