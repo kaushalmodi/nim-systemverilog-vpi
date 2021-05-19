@@ -1,0 +1,36 @@
+#+title: Verilab Probes
+
+This is an example of DPI-C/VPI binding with a SystemVerilog test
+bench from the SNUG Europe 2012 paper by Jonathan Bromley: [[https://www.verilab.com/resources/papers-and-presentations/#snug2012vpi][I Spy with
+My VPI - Monitoring signals by name, for the UVM register package and
+more]].
+
+Here is the synopsis of that paper:
+
+#+begin_quote
+UVM's register package has an "active monitoring" feature that allows
+you to predict the value of read-only status registers by probing the
+HDL signal that carries that status.  Until now, detecting
+value-changes on those status signals has been tricky, requiring
+hard-coded cross-module references that don't sit nicely with the
+configurability that we expect from a UVM test environment.
+
+This paper presents a novel SystemVerilog VPI/DPI package that cuts
+through this problem, allowing the signal's name to be specified as a
+string and removing all need for hard-coded references.  It's also
+great for monitoring other miscellaneous status signals in your UVM,
+OVM or VMM testbench, even if you're not using a register package.
+We're already using this new package in our own projects.
+#+end_quote
+
+[[https://www.verilab.com/files/snug_2012_presentation71_final.pdf][Presentation]] | [[https://www.verilab.com/files/snug_2012_paper71_final.pdf][Paper]] | [[https://www.verilab.com/files/signal_probe_v1_0_beta.tar.gz][Code]]
+
+* Original code
+The original code from this paper is in the [[./orig/][orig/]] directory.
+
+To run that code, cd to that directory and run:
+#+begin_example
+make
+#+end_example
+This overrides the "Compilation" instructions in [[./orig/README][the original code's
+README]].
