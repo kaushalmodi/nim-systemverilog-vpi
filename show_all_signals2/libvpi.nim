@@ -4,7 +4,8 @@ import ../show_all_signals/common
 
 vpiDefine task show_all_signals:
   compiletf:
-    systfHandle.vpiNumArgCheck(0 .. 1)
+    when not defined(multipleArgs):
+      systfHandle.vpiNumArgCheck(0 .. 1)
     for argIndex, argHandle in systfHandle.vpiArgs:
       let
         argType = vpi_get(vpiType, argHandle)
