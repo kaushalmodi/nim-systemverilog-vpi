@@ -15,7 +15,6 @@ template dbg(str: typed) =
 ## struct members to support that linked list are also included.
 type
   HookRecord = ref object
-   allHooks_link: HookRecord      ## linked list pointer - all records
    changeList_link: HookRecord    ## linked list pointer - records awaiting processing
    on_changeList: bool            ## true if we're on the list, false if not
    check {.cursor.}: HookRecord   ## copy of self-pointer, for safety
@@ -30,8 +29,6 @@ type
 var
   # A single list of hook_records that have value changes yet to be handled
   changeList: HookRecord
-  # A single list of all hook_records, for use when deallocating memory
-  allHooks: HookRecord
   # VPI handle to the single bit that is toggled to notify SV of pending
   # value-changes that require service
   notifier: VpiHandle
@@ -218,15 +215,13 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
                       obj: obj,
                       isSigned: vpi_get(vpiSigned, obj) == 1,
                       size: vpi_get(vpiSize, obj),
-                      sv_key: sv_key,
-                      # Linking all the hooks prevents the GC from collecting those prematurely.
-                      # If the GC is changed for arc or any other GC to none, the auto garbage
-                      # collection stops entirely and then this allHooks_link is not needed.
-                      allHooks_link: allHooks)
+                      sv_key: sv_key)
+  # Do not garbage-collect these hooks, because we need to retain all
+  # the hooks for all the probe points for the whole simulation.
+  GC_ref(hook)
   hook.top_msb = cuint(1) shl ((hook.size-1) mod 32)
   hook.top_mask = cuint(2) * hook.top_msb - cuint(1)
   hook.check = hook
-  allHooks = hook
 
   dbg "hook addr = " & $cast[int](hook).toHex()
   dbg &"hook: size = {hook.size}, top_msb = {hook.top_msb:#x}, top_mask = {hook.top_mask:#x}"
