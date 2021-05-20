@@ -136,16 +136,11 @@ proc isVerilogType(vpi_type: cint): bool =
 proc chandle_to_hook(hnd: pointer): HookRecordRef =
   ## Given a handle value obtained from an untrusted source,
   ## cast it to a HookRecordRef and do some sanity checks.
-  dbg "chandle_to_hook 1"
   let
     recRef = cast[HookRecordRef](hnd)
-  dbg "chandle_to_hook 2: recRef addr = " & $cast[int](recRef).toHex()
-  dbg "chandle_to_hook 2: recRef.check addr = " & $cast[int](recRef.check).toHex()
   if recRef != nil and recRef.check == recRef:
-    dbg "chandle_to_hook 3"
     return recRef
   else:
-    dbg "chandle_to_hook 4"
     stop_on_error("Bad chandle argument is not a valid created hook")
     return nil
 
@@ -206,9 +201,6 @@ proc vc_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
   ## value-change callback handler.  There is only one entry point.
   ## Each callback's user_data field holds a pointer to the
   ## corresponding signal's hook_record structure.
-  dbg "vc_callback 1"
-  dbg "cb data user_data = " & $cbDataPtr[].user_data
-  dbg "x"
   let
     # user_data (cstring) -$-> string -parseInt-> int -cast-> pointer
     hook = chandle_to_hook(cast[pointer](parseInt($cbDataPtr[].user_data)))
@@ -248,7 +240,6 @@ proc enable_cb(recRef: HookRecordRef) =
   if recRef.cb == nil:
     let
       recRefCstring: cstring = $cast[int](recRef)
-    dbg &"enable_cb: recRec cstring = {recRefCstring}"
     var
       # Time and value objects should not be needed, but Xcelium requires them
       time_s = s_vpi_time(`type`: vpiSuppressTime)
@@ -296,8 +287,6 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
     recRef = allocate_hook_record()
     obj = vpi_handle_by_name(name, nil)    # Locate the chosen object
 
-  dbg "vlab_probes_create: recRef addr = " & $cast[int](recRef).toHex()
-
   # If there was a problem, return nil to report it.
   if obj == nil:
     vpiEcho &"*W,VLAB_PROBES: create(\"{name}\") could not locate requested signal"
@@ -329,21 +318,14 @@ proc vlab_probes_setVcEnable(hnd: pointer; enable: cint) {.exportc, dynlib.} =
   ## is called with `enable` true, the function has no effect.  Similarly,
   ## if monitoring is disabled and the function is called with `enable`
   ## false, it has no effect.
-  dbg "vlab_probes_setVcEnable 1"
   let
     hook = chandle_to_hook(hnd)
-  dbg "vlab_probes_setVcEnable 2"
   if hook == nil:
-    dbg "vlab_probes_setVcEnable 3"
     return
-  dbg "vlab_probes_setVcEnable 4"
   if enable == 1:
-    dbg "vlab_probes_setVcEnable 5"
     enable_cb(hook)
   else:
-    dbg "vlab_probes_setVcEnable 6"
     disable_cb(hook)
-  dbg "vlab_probes_setVcEnable 7"
 
 proc vlab_probes_getVcEnable(hnd: pointer): cint {.exportc, dynlib.} =
   ## Find the current enabled/disabled state of value-change callback
@@ -373,7 +355,6 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   ## is signed.
   ## Returns 1 if success, 0 if failure (bad handle, chunk
   ## out-of-bounds).
-  dbg "vlab_probes_getValue32 1"
   var
     chunk = chunk
   let
@@ -399,9 +380,8 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   # Copy the relevant aval/bval bits into the output argument.
   let
     vecPtr = value_s.value.vector # type ptr t_vpi_vecval
-    # vecPtrp1 = cast[ptr svLogicVecVal](cast[cint](vecPtr) + 8*chunk)
+    # vecPtrp1 = cast[ptr svLogicVecVal](cast[cint](vecPtr) + sizeof(svLogicVecVal)*1)
   # resultPtr = vecPtr[chunk] # This does not compile in Nim
-  dbg &"size of svLogicVecVal = {sizeof(svLogicVecVal)}"
   dbg &"size {recRef.size}, chunk {chunk}: vector[0]: aval = {vecPtr[].aval:#x}, bval = {vecPtr[].aval:#x}"
   # dbg &"size {recRef.size}, chunk {chunk}: vector[1]: aval = {vecPtrp1[].aval:#x}, bval = {vecPtrp1[].aval:#x}"
   resultPtr[] = cast[ptr svLogicVecVal](cast[cint](vecPtr) + chunk*sizeof(svLogicVecVal))[]
@@ -424,7 +404,6 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
 proc vlab_probes_getSize(hnd: pointer): cint {.exportc, dynlib.} =
   ## Get the number of bits in the signal referenced by `hnd`.
   ## Returns zero if the handle is bad.
-  dbg "vlab_probes_getSize 1"
   let
     recRef = chandle_to_hook(hnd)
   if recRef == nil:
@@ -434,7 +413,6 @@ proc vlab_probes_getSize(hnd: pointer): cint {.exportc, dynlib.} =
 proc vlab_probes_getSigned(hnd: pointer): cint {.exportc, dynlib.} =
   ## Get a flag indicating whether the signal referenced by `hnd`
   ## is signed (0=unsigned, 1=signed).
-  dbg "vlab_probes_getSigned 1"
   let
     recRef = chandle_to_hook(hnd)
   if recRef == nil:
