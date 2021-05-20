@@ -318,7 +318,7 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
   recRef.cb       = nil
   recRef.top_msb  = cuint(1) shl ((recRef.size-1) mod 32)
   recRef.top_mask = cuint(2) * recRef.top_msb - cuint(1)
-
+  dbg &"recRef: size = {recRef.size}, top_msb = {recRef.top_msb:#x}, top_mask = {recRef.top_mask:#x}"
   return cast[pointer](recRef)
 
 proc vlab_probes_setVcEnable(hnd: pointer; enable: cint) {.exportc, dynlib.} =
@@ -359,18 +359,20 @@ proc vlab_probes_getVcEnable(hnd: pointer): cint {.exportc, dynlib.} =
 proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: cint): cint {.exportc, dynlib.} =
   ## Get the current value of the signal referenced by `hnd`.
   ## The result is placed into the vector pointed by `resultPtr`,
-  ## which must be a 32-bit logic or equivalent type.
-  ## `chunk` indicates which 32-bit slice of the signal
-  ## is to be read: chunk=0 gets the least significant 32 bits,
-  ## chunk=1 gets bits [63:32], and in general the function
-  ## reads bits [32*chunk+:32].  If the specified chunk is completely
-  ## beyond the end of the vector (i.e. the signal's size is less than
-  ## 32*chunk bits) then the function yields an error.  If the signal
-  ## does not completely fill the chunk (for example, a 48-bit signal
-  ## and chunk=1) then the result is zero-extended if the signal is
-  ## unsigned, and sign-extended in the standard Verilog 4-state way
-  ## if the signal is signed.
-  ## Returns 1 if success, 0 if failure (bad handle, chunk out-of-bounds).
+  ## which must be a 32-bit logic or equivalent type.  `chunk`
+  ## indicates which 32-bit slice of the signal is to be read:
+  ##   chunk=0 gets the least significant 32 bits
+  ##   chunk=1 gets bits [63:32],
+  ## and in general the function reads bits [32*chunk+:32].
+  ## If the specified chunk is completely beyond the end of the vector
+  ## (i.e. the signal's size is less than 32*chunk bits) then the
+  ## function yields an error.  If the signal does not completely fill
+  ## the chunk (for example, a 48-bit signal and chunk=1) then the
+  ## result is zero-extended if the signal is unsigned, and
+  ## sign-extended in the standard Verilog 4-state way if the signal
+  ## is signed.
+  ## Returns 1 if success, 0 if failure (bad handle, chunk
+  ## out-of-bounds).
   dbg "vlab_probes_getValue32 1"
   var
     chunk = chunk
@@ -397,17 +399,21 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   # Copy the relevant aval/bval bits into the output argument.
   let
     vecPtr = value_s.value.vector # type ptr t_vpi_vecval
-
+    # vecPtrp1 = cast[ptr svLogicVecVal](cast[cint](vecPtr) + 8*chunk)
   # resultPtr = vecPtr[chunk] # This does not compile in Nim
   let
     vecPtrUpdated = cast[svvpi.p_vpi_vecval](cast[cint](vecPtr) + chunk)
   resultPtr[].aval = vecPtrUpdated[].aval
   resultPtr[].bval = vecPtrUpdated[].bval
   #
+  dbg &"size of svLogicVecVal = {sizeof(svLogicVecVal)}"
+  dbg &"size {recRef.size}, chunk {chunk}: vector[0]: aval = {vecPtr[].aval:#x}, bval = {vecPtr[].aval:#x}"
+  # dbg &"size {recRef.size}, chunk {chunk}: vector[1]: aval = {vecPtrp1[].aval:#x}, bval = {vecPtrp1[].aval:#x}"
 
   # Perform sign extension if appropriate.
   if (chunk_lsb + 32) > recRef.size:
     # We're working on the most significant word, and it is not full.
+    dbg &"size {recRef.size}: result before: aval = {resultPtr[].aval:#x}, bval = {resultPtr[].aval:#x}"
     resultPtr[].aval = resultPtr[].aval and recRef.top_mask
     resultPtr[].bval = resultPtr[].bval and recRef.top_mask
     if recRef.isSigned == 1:
@@ -415,6 +421,7 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
         resultPtr[].bval = resultPtr[].bval or not recRef.top_mask
       if resultPtr[].aval == 1 and recRef.top_msb == 1:
         resultPtr[].aval = resultPtr[].aval or not recRef.top_mask
+    dbg &"size {recRef.size}: result after: aval = {resultPtr[].aval:#x}, bval = {resultPtr[].aval:#x}"
 
   return 1
 

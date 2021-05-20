@@ -513,7 +513,7 @@ void * vlab_probes_create(char *name, int sv_key) {
    rec->cb       = NULL;
    rec->top_msb  = 1U << ((rec->size-1) % 32);
    rec->top_mask = 2U * rec->top_msb - 1U;
-
+   /* vpi_printf("rec: size = %0d, top_msb = %x, top_mask = %x\n", rec->size, rec->top_msb, rec->top_mask); */
    return (void *)rec;
 }
 
@@ -566,9 +566,13 @@ int vlab_probes_getValue32(void * hnd, svLogicVecVal *result, int chunk) {
 
    // Copy the relevant aval/bval bits into the output argument.
    vec_p = value_s.value.vector;
+   /* printf("size %0d: vec_p[0]: aval = %x, bval = %x\n", hook->size, vec_p[0].aval, vec_p[0].bval); */
+   /* printf("size %0d: vec_p[1]: aval = %x, bval = %x\n", hook->size, vec_p[1].aval, vec_p[1].bval); */
+   /* printf("size %0d: result before-: aval = %x, bval = %x\n", hook->size, result->aval, result->bval); */
    *result = vec_p[chunk];
    // Perform sign extension if appropriate.
    if ((chunk_lsb + 32) > hook->size) {
+      /* printf("size %0d: result before: aval = %x, bval = %x\n", hook->size, result->aval, result->bval); */
       // We're working on the most significant word, and it is not full.
       result->aval &= hook->top_mask;
       result->bval &= hook->top_mask;
@@ -580,6 +584,7 @@ int vlab_probes_getValue32(void * hnd, svLogicVecVal *result, int chunk) {
             result->aval |= ~(hook->top_mask);
          }
       }
+      /* printf("size %0d: result after: aval = %x, bval = %x\n", hook->size, result->aval, result->bval); */
    }
    return 1;
 }

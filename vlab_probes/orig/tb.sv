@@ -93,6 +93,9 @@ module observe_and_compare #(parameter nBits = 1) (input [nBits-1:0] sig);
          test.detected_changes++;
          detected_changes++;
          for (int chunk = 0; chunk < nChunks; chunk++) begin
+            // chunk == 0 -> result[31: 0]
+            // chunk == 1 -> result[63:32]
+            // $display("%0t: calling getValue32(%0d)", $realtime, chunk);
             result[chunk*32 +: 32] = p.getValue32(chunk);
          end
       end
