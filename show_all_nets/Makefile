@@ -1,9 +1,8 @@
-# Time-stamp: <2021-05-13 23:47:55 kmodi>
+# Time-stamp: <2021-05-19 20:39:57 kmodi>
 
 .DEFAULT_GOAL := default
 
 GIT_ROOT = $(shell git rev-parse --show-toplevel)
-NIM_GC ?= arc
 NIM_SWITCHES ?= --expandMacro:vpiDefine
 
 include $(GIT_ROOT)/makefile
