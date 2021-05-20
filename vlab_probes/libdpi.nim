@@ -1,5 +1,9 @@
-import std/[strformat]
+import std/[strformat, strutils]
 import svdpi, svvpi
+
+template dbg(str: typed) =
+  when defined(debug):
+    vpiEcho(str)
 
 ## Typedefs and private data used by the Nim procs
 
@@ -10,11 +14,11 @@ import svdpi, svvpi
 ## of signals that need to be serviced (the changeList), and
 ## struct members to support that linked list are also included.
 type
-  t_hook_record = object
-   allHooks_link: ptr t_hook_record   ## linked list pointer - all records
-   changeList_link: ptr t_hook_record ## linked list pointer - records awaiting processing
+  HookRecord = object
+   allHooks_link: ref HookRecord      ## linked list pointer - all records
+   changeList_link: ref HookRecord    ## linked list pointer - records awaiting processing
    on_changeList: cint                ## 1 if we're on the list, 0 if not
-   check: ptr t_hook_record           ## copy of self-pointer, for safety
+   check {.cursor.}: ref HookRecord              ## copy of self-pointer, for safety
    obj: VpiHandle                     ## reference to the monitored signal
    sv_key: cint                       ## unique key to help SV find this
    cb: VpiHandle                      ## VPI value-change callback object
@@ -22,14 +26,13 @@ type
    isSigned: cint                     ## is the signal signed?
    top_mask: cuint                    ## word-mask for most significant 32 bits
    top_msb: cuint                     ## MSB position within that word
-  s_hook_record = t_hook_record
-  p_hook_record = ptr t_hook_record
+  HookRecordRef = ref HookRecord
 
 var
   # A single list of hook_records that have value changes yet to be handled
-  changeList: p_hook_record
+  changeList: HookRecordRef
   # A single list of all hook_records, for use when deallocating memory
-  allHooks: p_hook_record
+  allHooks: HookRecordRef
   # VPI handle to the single bit that is toggled to notify SV of pending
   # value-changes that require service
   notifier: VpiHandle
@@ -58,38 +61,37 @@ proc stop_on_error(message: string) =
   report_error("Stopping.  Continue the run to see further diagnostics")
   discard vpi_control(vpiStop, 1)
 
-proc allocate_hook_record(): p_hook_record =
+proc allocate_hook_record(): HookRecordRef =
   ## Get and initialize a new s_hook_record from the heap.
   ## Add it to the allHooks structure to support memory
   ## deallocation on simulator restart.
-  var
-    rec = s_hook_record(on_changeList: 0.cint,
-                        obj: nil,
-                        allHooks_link: allHooks)
-  rec.check = addr rec
-  allHooks = addr rec
-  return addr rec
+  let
+    recRef = HookRecordRef(on_changeList: 0.cint,
+                           obj: nil,
+                           allHooks_link: allHooks)
+  dbg "allocate_hook_record: recRef addr = " & $cast[int](recRef).toHex()
+  recRef.check = recRef
+  allHooks = recRef
 
-# TODO: Do we even need this? Nim should be automatically doing the memory
-# management.
-proc free_hook_record(recPtr: p_hook_record) =
+  return recRef
+
+proc free_hook_record(recRef: HookRecordRef) =
   ## Deallocate a single hook_record structure.
   ## Destroy its internal referenced VPI objects before deallocation.
-  if recPtr == nil:
+  if recRef == nil:
     return
-  if recPtr[].cb != nil:
-    discard vpi_remove_cb(recPtr[].cb)
-  if recPtr[].obj != nil:
-    discard vpi_release_handle(recPtr[].obj)
-  # free(recPtr)
+  if recRef.cb != nil:
+    discard vpi_remove_cb(recRef.cb)
+  if recRef.obj != nil:
+    discard vpi_release_handle(recRef.obj)
 
 proc free_all_hook_records() =
   ## Deallocate all hook record structures that exist on the allHooks list.
   while allHooks != nil:
     let
-      recPtr = allHooks
-    allHooks = recPtr[].allHooks_link
-    free_hook_record(recPtr)
+      recRef = allHooks
+    allHooks = recRef.allHooks_link
+    free_hook_record(recRef)
 
 proc free_everything() =
   ## Deallocate all memory structures owned by this VPI application.
@@ -100,25 +102,25 @@ proc free_everything() =
     discard vpi_release_handle(notifier)
   free_all_hook_records()
 
-proc changeList_pop(): p_hook_record =
+proc changeList_pop(): HookRecordRef =
   ## Get and remove the first (newest) entry from the
   ## list of signals with unserviced value changes.
   ## Return a reference to that entry.
   let
-    recPtr = changeList
-  if recPtr != nil:
-    changeList = recPtr[].changeList_link
-    recPtr[].on_changeList = 0
-  return recPtr
+    recRef = changeList
+  if recRef != nil:
+    changeList = recRef.changeList_link
+    recRef.on_changeList = 0
+  return recRef
 
-proc changeList_pushIfNeeded(recPtr: p_hook_record) =
+proc changeList_pushIfNeeded(recRef: HookRecordRef) =
   ## Add a signal to the list of unserviced value changes.
   ## But if the signal is already on that list, don't
   ## try to add it again.
-  if recPtr[].on_changeList == 0.cint:
-    recPtr[].on_changeList = 1
-    recPtr[].changeList_link = changeList
-    changeList = recPtr
+  if recRef.on_changeList == 0.cint:
+    recRef.on_changeList = 1
+    recRef.changeList_link = changeList
+    changeList = recRef
 
 proc isVerilogType(vpi_type: cint): bool =
   ## Check to see whether a vpiType value represents
@@ -131,14 +133,19 @@ proc isVerilogType(vpi_type: cint): bool =
                        vpiBitSelect, vpiBitVar, vpiEnumVar, vpiIntVar,
                        vpiLongIntVar, vpiShortIntVar, vpiIntegerVar, vpiByteVar }
 
-proc chandle_to_hook(hnd: pointer): p_hook_record =
+proc chandle_to_hook(hnd: pointer): HookRecordRef =
   ## Given a handle value obtained from an untrusted source,
-  ## cast it to a p_hook_record and do some sanity checks.
+  ## cast it to a HookRecordRef and do some sanity checks.
+  dbg "chandle_to_hook 1"
   let
-    hookPtr = cast[p_hook_record](hnd)
-  if hookPtr != nil and hookPtr[].check == hookPtr:
-    return hookPtr
+    recRef = cast[HookRecordRef](hnd)
+  dbg "chandle_to_hook 2: recRef addr = " & $cast[int](recRef).toHex()
+  dbg "chandle_to_hook 2: recRef.check addr = " & $cast[int](recRef.check).toHex()
+  if recRef != nil and recRef.check == recRef:
+    dbg "chandle_to_hook 3"
+    return recRef
   else:
+    dbg "chandle_to_hook 4"
     stop_on_error("Bad chandle argument is not a valid created hook")
     return nil
 
@@ -198,9 +205,13 @@ proc vc_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
   ## This is the function that is provided to the VPI as a
   ## value-change callback handler.  There is only one entry point.
   ## Each callback's user_data field holds a pointer to the
-  ## corrresponding signal's hook_record structure.
+  ## corresponding signal's hook_record structure.
+  dbg "vc_callback 1"
+  dbg "cb data user_data = " & $cbDataPtr[].user_data
+  dbg "x"
   let
-    hook = chandle_to_hook(cbDataPtr[].user_data)
+    # user_data (cstring) -$-> string -parseInt-> int -cast-> pointer
+    hook = chandle_to_hook(cast[pointer](parseInt($cbDataPtr[].user_data)))
 
   if hook == nil:
     return 0
@@ -228,32 +239,35 @@ proc vc_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
   else:
     return 1
 
-proc enable_cb(hook: p_hook_record) =
+proc enable_cb(recRef: HookRecordRef) =
   ## Sensitise to a signal by placing a value-change callback on it.
   ## Set up the callback so that it does not collect the signal's
   ## value or the callback time (reduces overhead).  Keep a copy
   ## of the callback handle in the signal's hook record, to simplify
   ## later removal of the callback.
-  if hook[].cb == nil:
+  if recRef.cb == nil:
+    let
+      recRefCstring: cstring = $cast[int](recRef)
+    dbg &"enable_cb: recRec cstring = {recRefCstring}"
     var
       # Time and value objects should not be needed, but Xcelium requires them
       time_s = s_vpi_time(`type`: vpiSuppressTime)
       value_s = s_vpi_value(format: vpiSuppressVal)
       # Set up the new callback
       cb_data = s_cb_data(cb_rtn: vc_callback,
-                          obj: hook[].obj,
-                          user_data: cast[cstring](hook),
+                          obj: recRef.obj,
+                          user_data: recRefCstring, # save the stringified ref address as user_data
                           time: addr time_s,
                           value: addr value_s,
                           reason: cbValueChange)
-    hook[].cb = vpi_register_cb(addr cb_data)
+    recRef.cb = vpi_register_cb(addr cb_data)
 
-proc disable_cb(hook: p_hook_record) =
+proc disable_cb(hook: HookRecordRef) =
   ## Disable value-change callbacks on a signal by removing
   ## its value-change callback completely.
-  if hook[].cb != nil:
-    discard vpi_remove_cb(hook[].cb)
-    hook[].cb = nil
+  if hook.cb != nil:
+    discard vpi_remove_cb(hook.cb)
+    hook.cb = nil
 
 ## Proc signatures of functions/tasks exported from SystemVerilog via DPI-C
 
@@ -267,8 +281,8 @@ proc vlab_probes_vcNotify(sv_key: cint) {.importc.}
 ## Procs for DPI-C import in SystemVerilog
 
 proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.} =
-  ## Create an access hook on the signal whose absolute pathname is ~name~.
-  ## Use ~sv_key~ as the key shared between SV and C that will be used as
+  ## Create an access hook on the signal whose absolute pathname is `name`.
+  ## Use `sv_key` as the key shared between SV and C that will be used as
   ## the unique identifier for the created probe object.
   ## This function returns a pointer to a hook_record structure (see
   ## below), which is returned from C as void* and passed to SV as
@@ -279,14 +293,15 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
   ## i.e. it does nothing.  To make the access hook useful, it must be
   ## enabled by a suitable call to vlab_probes_setVcEnable (see below).
   let
-    recPtr = allocate_hook_record()
+    recRef = allocate_hook_record()
     obj = vpi_handle_by_name(name, nil)    # Locate the chosen object
+
+  dbg "vlab_probes_create: recRef addr = " & $cast[int](recRef).toHex()
 
   # If there was a problem, return nil to report it.
   if obj == nil:
     vpiEcho &"*W,VLAB_PROBES: create(\"{name}\") could not locate requested signal"
     return nil
-
   # Check the object is indeed a vector variable or net; error if not.
   let
     objType = vpi_get(vpiType, obj)
@@ -296,32 +311,39 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
     vpiEcho &"*W,VLAB_PROBES: create(\"{name}\"): object is not a variable or net of integral type"
     return nil
 
-  recPtr[].obj      = obj
-  recPtr[].isSigned = vpi_get(vpiSigned, obj)
-  recPtr[].size     = vpi_get(vpiSize, obj)
-  recPtr[].sv_key   = sv_key
-  recPtr[].cb       = nil
-  recPtr[].top_msb  = cuint(1) shl ((recPtr[].size-1) mod 32)
-  recPtr[].top_mask = cuint(2) * recPtr[].top_msb - cuint(1)
+  recRef.obj      = obj
+  recRef.isSigned = vpi_get(vpiSigned, obj)
+  recRef.size     = vpi_get(vpiSize, obj)
+  recRef.sv_key   = sv_key
+  recRef.cb       = nil
+  recRef.top_msb  = cuint(1) shl ((recRef.size-1) mod 32)
+  recRef.top_mask = cuint(2) * recRef.top_msb - cuint(1)
 
-  return cast[pointer](recPtr)
+  return cast[pointer](recRef)
 
 proc vlab_probes_setVcEnable(hnd: pointer; enable: cint) {.exportc, dynlib.} =
   ## Enable or disable value-changed callback on the signal referenced
-  ## by p_hook_record `hnd`.  If ~enable~ is true (non-zero), value-change
-  ## monitoring is enabled for the signal.  If ~enable~ is false (zero),
+  ## by HookRecordRef `hnd`.  If `enable` is true (non-zero), value-change
+  ## monitoring is enabled for the signal.  If `enable` is false (zero),
   ## it is disabled.  If monitoring is already enabled and this function
-  ## is called with ~enable~ true, the function has no effect.  Similarly,
-  ## if monitoring is disabled and the function is called with ~enable~
+  ## is called with `enable` true, the function has no effect.  Similarly,
+  ## if monitoring is disabled and the function is called with `enable`
   ## false, it has no effect.
+  dbg "vlab_probes_setVcEnable 1"
   let
     hook = chandle_to_hook(hnd)
+  dbg "vlab_probes_setVcEnable 2"
   if hook == nil:
+    dbg "vlab_probes_setVcEnable 3"
     return
+  dbg "vlab_probes_setVcEnable 4"
   if enable == 1:
+    dbg "vlab_probes_setVcEnable 5"
     enable_cb(hook)
   else:
+    dbg "vlab_probes_setVcEnable 6"
     disable_cb(hook)
+  dbg "vlab_probes_setVcEnable 7"
 
 proc vlab_probes_getVcEnable(hnd: pointer): cint {.exportc, dynlib.} =
   ## Find the current enabled/disabled state of value-change callback
@@ -336,9 +358,9 @@ proc vlab_probes_getVcEnable(hnd: pointer): cint {.exportc, dynlib.} =
 
 proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: cint): cint {.exportc, dynlib.} =
   ## Get the current value of the signal referenced by `hnd`.
-  ## The result is placed into the vector ~result~,
+  ## The result is placed into the vector pointed by `resultPtr`,
   ## which must be a 32-bit logic or equivalent type.
-  ## ~chunk~ indicates which 32-bit slice of the signal
+  ## `chunk` indicates which 32-bit slice of the signal
   ## is to be read: chunk=0 gets the least significant 32 bits,
   ## chunk=1 gets bits [63:32], and in general the function
   ## reads bits [32*chunk+:32].  If the specified chunk is completely
@@ -349,13 +371,14 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   ## unsigned, and sign-extended in the standard Verilog 4-state way
   ## if the signal is signed.
   ## Returns 1 if success, 0 if failure (bad handle, chunk out-of-bounds).
+  dbg "vlab_probes_getValue32 1"
   var
     chunk = chunk
   let
-    hook = chandle_to_hook(hnd)
+    recRef = chandle_to_hook(hnd)
     chunk_lsb = chunk * 32
 
-  if hook == nil:
+  if recRef == nil:
     stop_on_error("vlab_probes_getValue32: bad handle")
     return 0
 
@@ -363,13 +386,13 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
     report_error("vlab_probes_getValue32: negative chunk index")
     return 0
 
-  if chunk_lsb >= hook[].size:
-    chunk = ((hook[].size - 1)/32).cint
+  if chunk_lsb >= recRef.size:
+    chunk = ((recRef.size - 1)/32).cint
 
   # Get the whole vector value from VPI
   var
     value_s = s_vpi_value(format: vpiVectorVal)
-  vpi_get_value(hook[].obj, addr value_s)
+  vpi_get_value(recRef.obj, addr value_s)
 
   # Copy the relevant aval/bval bits into the output argument.
   let
@@ -383,35 +406,37 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   #
 
   # Perform sign extension if appropriate.
-  if (chunk_lsb + 32) > hook[].size:
+  if (chunk_lsb + 32) > recRef.size:
     # We're working on the most significant word, and it is not full.
-    resultPtr[].aval = resultPtr[].aval and hook[].top_mask
-    resultPtr[].bval = resultPtr[].bval and hook[].top_mask
-    if hook[].isSigned == 1:
-      if resultPtr[].bval == 1 and hook[].top_msb == 1:
-        resultPtr[].bval = resultPtr[].bval or not hook[].top_mask
-      if resultPtr[].aval == 1 and hook[].top_msb == 1:
-        resultPtr[].aval = resultPtr[].aval or not hook[].top_mask
+    resultPtr[].aval = resultPtr[].aval and recRef.top_mask
+    resultPtr[].bval = resultPtr[].bval and recRef.top_mask
+    if recRef.isSigned == 1:
+      if resultPtr[].bval == 1 and recRef.top_msb == 1:
+        resultPtr[].bval = resultPtr[].bval or not recRef.top_mask
+      if resultPtr[].aval == 1 and recRef.top_msb == 1:
+        resultPtr[].aval = resultPtr[].aval or not recRef.top_mask
 
   return 1
 
 proc vlab_probes_getSize(hnd: pointer): cint {.exportc, dynlib.} =
   ## Get the number of bits in the signal referenced by `hnd`.
   ## Returns zero if the handle is bad.
+  dbg "vlab_probes_getSize 1"
   let
-    hook = chandle_to_hook(hnd)
-  if hook == nil:
+    recRef = chandle_to_hook(hnd)
+  if recRef == nil:
     return 0
-  return hook[].size
+  return recRef.size
 
 proc vlab_probes_getSigned(hnd: pointer): cint {.exportc, dynlib.} =
   ## Get a flag indicating whether the signal referenced by `hnd`
   ## is signed (0=unsigned, 1=signed).
+  dbg "vlab_probes_getSigned 1"
   let
-    hook = chandle_to_hook(hnd)
-  if hook == nil:
+    recRef = chandle_to_hook(hnd)
+  if recRef == nil:
     return 0
-  return hook[].isSigned
+  return recRef.isSigned
 
 proc vlab_probes_specifyNotifier(fullname: cstring): cint {.exportc, dynlib.} =
   ## Here's how we get the value change information back in to SV.
@@ -442,5 +467,5 @@ proc vlab_probes_processChangeList() {.exportc, dynlib.} =
   ## function vlab_probes_vcNotify for that signal.
   while changeList != nil:
     let
-      recPtr = changeList_pop()
-    vlab_probes_vcNotify(recPtr[].sv_key)
+      recRef = changeList_pop()
+    vlab_probes_vcNotify(recRef.sv_key)
