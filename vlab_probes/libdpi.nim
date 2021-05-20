@@ -61,7 +61,7 @@ proc stop_on_error(message: string) =
   report_error("Stopping.  Continue the run to see further diagnostics")
   discard vpi_control(vpiStop, 1)
 
-proc allocate_hook_record(): HookRecordRef =
+proc newHookRecord(): HookRecordRef =
   ## Get and initialize a new s_hook_record from the heap.
   ## Add it to the allHooks structure to support memory
   ## deallocation on simulator restart.
@@ -69,38 +69,11 @@ proc allocate_hook_record(): HookRecordRef =
     recRef = HookRecordRef(on_changeList: 0.cint,
                            obj: nil,
                            allHooks_link: allHooks)
-  dbg "allocate_hook_record: recRef addr = " & $cast[int](recRef).toHex()
+  dbg "newHookRecord: recRef addr = " & $cast[int](recRef).toHex()
   recRef.check = recRef
   allHooks = recRef
 
   return recRef
-
-proc free_hook_record(recRef: HookRecordRef) =
-  ## Deallocate a single hook_record structure.
-  ## Destroy its internal referenced VPI objects before deallocation.
-  if recRef == nil:
-    return
-  if recRef.cb != nil:
-    discard vpi_remove_cb(recRef.cb)
-  if recRef.obj != nil:
-    discard vpi_release_handle(recRef.obj)
-
-proc free_all_hook_records() =
-  ## Deallocate all hook record structures that exist on the allHooks list.
-  while allHooks != nil:
-    let
-      recRef = allHooks
-    allHooks = recRef.allHooks_link
-    free_hook_record(recRef)
-
-proc free_everything() =
-  ## Deallocate all memory structures owned by this VPI application.
-  ## This will typically be done by the VPI simulation restart callback.
-  ## NOTE that the restart callback itself is NOT deallocated here,
-  ## because this function is probably called from within that callback.
-  if notifier != nil:
-    discard vpi_release_handle(notifier)
-  free_all_hook_records()
 
 proc changeList_pop(): HookRecordRef =
   ## Get and remove the first (newest) entry from the
@@ -143,36 +116,6 @@ proc chandle_to_hook(hnd: pointer): HookRecordRef =
   else:
     stop_on_error("Bad chandle argument is not a valid created hook")
     return nil
-
-
-## Static (file-local) helper functions related to simulator action callbacks
-
-proc action_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
-  ## The callback function used to deal with simulator actions.
-  ## Currently it handles only cbStartOfReset, which is caused by
-  ## an interactive restart of the simulation back to time zero.
-  case cbDataPtr[].reason
-  of cbStartOfReset:
-    # FIXME: Seems like Xcelium never triggers cbStartOfReset cb??
-    # Thu May 20 09:16:48 EDT 2021 - kmodi
-    vpiEcho &"Running cbStartOfReset callback"
-    vpiEcho "\n\n*I,VLAB_PROBE: cbStartOfReset, deallocate all internal data\n"
-    free_everything()
-  else:
-    discard
-  return 1
-
-proc setup_reset_callback() =
-  ## Set up reset/restart callbacks, removing any old callback if
-  ## necessary.
-  # Remove any existing callback
-  if reset_callback != nil:
-    discard vpi_remove_cb(reset_callback)
-
-  var
-    cbData = s_cb_data(cb_rtn: action_callback,
-                       reason: cbStartOfReset)
-  reset_callback = vpi_register_cb(addr cbData)
 
 
 ## Static (file-local) helper functions related to value-change callbacks
@@ -272,7 +215,7 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
   ## i.e. it does nothing.  To make the access hook useful, it must be
   ## enabled by a suitable call to vlab_probes_setVcEnable (see below).
   let
-    recRef = allocate_hook_record()
+    recRef = newHookRecord()
     obj = vpi_handle_by_name(name, nil)    # Locate the chosen object
 
   # If there was a problem, return nil to report it.
@@ -426,7 +369,6 @@ proc vlab_probes_specifyNotifier(fullname: cstring): cint {.exportc, dynlib.} =
     return 0
 
   notifier = obj
-  setup_reset_callback()
   return 1
 
 proc vlab_probes_processChangeList() {.exportc, dynlib.} =
