@@ -43,6 +43,9 @@
 #define vpi_release_handle vpi_free_object
 //#endif
 
+#define QuitSuccess 0
+#define QuitFailure 1
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -105,7 +108,7 @@ extern int vlab_probes_getVcEnable(void * hnd);
 // and chunk=1) then the result is zero-extended if the signal is
 // unsigned, and sign-extended in the standard Verilog 4-state way
 // if the signal is signed.
-// Returns 1 if success, 0 if failure (bad handle, chunk out-of-bounds).
+// Returns 0 if success, 1 if failure (bad handle, chunk out-of-bounds).
 //
 extern int vlab_probes_getValue32(void * hnd, svLogicVecVal *result, int chunk);
 
@@ -113,7 +116,7 @@ extern int vlab_probes_getValue32(void * hnd, svLogicVecVal *result, int chunk);
 // DPI import _______________________________________ vlab_probes_getSize
 //
 // Get the number of bits in the signal referenced by ~hnd~.
-// Returns zero if the handle is bad.
+// Returns 0 if the handle is bad.
 //
 extern int vlab_probes_getSize(void * hnd);
 
@@ -364,7 +367,7 @@ static PLI_INT32 action_callback(p_cb_data cb_data_p) {
          free_everything();
          break;
    }
-   return 1;
+   return QuitSuccess;
 }
 
 // Set up reset/restart callbacks, removing any old callback if necessary
@@ -399,14 +402,14 @@ static PLI_INT32 toggle_notifier() {
    if (notifier == NULL) {
       // Throw an error and return FALSE if there's no notifier set up.
       stop_on_error("Value-change callback but no active notifier bit");
-      return 0;
+      return QuitFailure;
    } else {
       s_vpi_value value_s;
       value_s.format = vpiScalarVal;
       vpi_get_value(notifier, &value_s);
       value_s.value.scalar = (value_s.value.scalar == vpi1)? vpi0: vpi1;
       vpi_put_value(notifier, &value_s, NULL, vpiNoDelay);
-      return 1;
+      return QuitSuccess;
    }
 }
 
@@ -416,7 +419,7 @@ static PLI_INT32 toggle_notifier() {
 //
 static PLI_INT32 vc_callback(p_cb_data cb_data) {
    p_hook_record hook = chandle_to_hook(cb_data->user_data);
-   if (hook == NULL) return 0;
+   if (hook == NULL) return QuitFailure;
    // At any given time, the first signal that suffers a
    // value-change callback will cause the notifier signal
    // to be toggled.  Subsequent callbacks don't toggle the
@@ -439,7 +442,7 @@ static PLI_INT32 vc_callback(p_cb_data cb_data) {
       int ok = toggle_notifier();
       return ok;
    } else {
-      return 1;
+      return QuitSuccess;
    }
 }
 
@@ -550,11 +553,11 @@ int vlab_probes_getValue32(void * hnd, svLogicVecVal *result, int chunk) {
 
    if (hook == NULL) {
       stop_on_error("vlab_probes_getValue32: bad handle");
-      return 0;
+      return QuitFailure;
    }
    if (chunk<0) {
       report_error("vlab_probes_getValue32: negative chunk index");
-      return 0;
+      return QuitFailure;
    }
    if (chunk_lsb >= hook->size) {
       chunk = (hook->size-1)/32;
@@ -586,7 +589,7 @@ int vlab_probes_getValue32(void * hnd, svLogicVecVal *result, int chunk) {
       }
       /* printf("size %0d: result after: aval = %x, bval = %x\n", hook->size, result->aval, result->bval); */
    }
-   return 1;
+   return QuitSuccess;
 }
 
 int vlab_probes_getSize(void * hnd) {
@@ -610,16 +613,16 @@ int vlab_probes_specifyNotifier(char * fullname) {
    // If there was a problem, return NULL to report it.
    if (obj == NULL) {
       report_error("vlab_probes_specifyNotifier() could not locate requested signal");
-      return 0;
+      return QuitFailure;
    }
    // Check the object is indeed a variable of type bit; error if not.
    if (vpi_get(vpiType, obj) != vpiBitVar) {
       report_error("vlab_probes_specifyNotifier(): object is not a bit variable");
-      return 0;
+      return QuitFailure;
    }
    notifier = obj;
    setup_reset_callback();
-   return 1;
+   return QuitSuccess;
 }
 
 // Walk the changeList, calling back to SV to handle each item in turn

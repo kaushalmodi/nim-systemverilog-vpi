@@ -27,10 +27,6 @@ type
    top_mask: cuint                ## word-mask for most significant 32 bits
    top_msb: cuint                 ## MSB position within that word
 
-const
-  vlabDpiSuccess = 1
-  vlabDpiFailure = 0
-
 var
   # A single list of hook_records that have value changes yet to be handled
   changeList: HookRecord
@@ -287,11 +283,11 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
 
   if hook == nil:
     stop_on_error("vlab_probes_getValue32: bad handle")
-    return vlabDpiFailure
+    return QuitFailure
 
   if chunk < 0:
     report_error("vlab_probes_getValue32: negative chunk index")
-    return vlabDpiFailure
+    return QuitFailure
 
   if chunk_lsb >= hook.size:
     chunk = (hook.size - 1) shr 5 # div by 32
@@ -329,7 +325,7 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
         if msbAval == 1:
           resultPtr[].aval = resultPtr[].aval or (not hook.top_mask)
     dbg &"size {hook.size}: result after: aval = {resultPtr[].aval:#x}, bval = {resultPtr[].aval:#x}"
-  return vlabDpiSuccess
+  return QuitSuccess
 
 proc vlab_probes_getSize(hnd: pointer): cint {.exportc, dynlib.} =
   ## Get the number of bits in the signal referenced by `hnd`.
@@ -359,15 +355,15 @@ proc vlab_probes_specifyNotifier(fullname: cstring): cint {.exportc, dynlib.} =
   # If there was a problem, return nil to report it.
   if obj == nil:
     report_error("vlab_probes_specifyNotifier() could not locate requested signal")
-    return vlabDpiFailure
+    return QuitFailure
 
   # Check the object is indeed a variable of type bit; error if not.
   if vpi_get(vpiType, obj) != vpiBitVar:
     report_error("vlab_probes_specifyNotifier(): object is not a bit variable")
-    return vlabDpiFailure
+    return QuitFailure
 
   notifier = obj
-  return vlabDpiSuccess
+  return QuitSuccess
 
 proc vlab_probes_processChangeList() {.exportc, dynlib.} =
   ## When the SV notifier signal is toggled, the SV code must immediately

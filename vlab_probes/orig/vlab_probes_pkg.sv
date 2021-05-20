@@ -87,10 +87,10 @@
     notifier_signal_name = $sformatf("%m.notifier");
     assert (!running) else
       $error("vlab_probes_run() called multiple times");
-    running = vlab_probes_specifyNotifier(notifier_signal_name);
-    assert (running) else
+    assert (!vlab_probes_specifyNotifier(notifier_signal_name)) else
       $error("vlab_probes_run() failed to register notifier signal %s",
              notifier_signal_name);
+    running = 1;
     forever @notifier begin
       vlab_probes_processChangeList();
     end
@@ -264,9 +264,7 @@ endclass
 
   function logic [31:0] signal_probe::getValue32(int chunk = 0);
     logic [31:0] value;
-    bit ok;
-    ok = vlab_probes_getValue32(handle, value, chunk);
-    assert (ok) else
+    assert (!vlab_probes_getValue32(handle, value, chunk)) else
       $error("vlab_probes_getValue32(.chunk(%0d)) on %s failed", chunk, signal_name);
     return value;
   endfunction
