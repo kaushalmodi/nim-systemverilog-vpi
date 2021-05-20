@@ -241,17 +241,12 @@ proc enable_cb(recRef: HookRecordRef) =
     let
       recRefCstring: cstring = $cast[int](recRef)
     var
-      # Time and value objects should not be needed, but Xcelium requires them
-      time_s = s_vpi_time(`type`: vpiSuppressTime)
-      value_s = s_vpi_value(format: vpiSuppressVal)
       # Set up the new callback
-      cb_data = s_cb_data(cb_rtn: vc_callback,
-                          obj: recRef.obj,
-                          user_data: recRefCstring, # save the stringified ref address as user_data
-                          time: addr time_s,
-                          value: addr value_s,
-                          reason: cbValueChange)
-    recRef.cb = vpi_register_cb(addr cb_data)
+      cbData = s_cb_data(cb_rtn: vc_callback,
+                         obj: recRef.obj,
+                         user_data: recRefCstring, # save the stringified ref address as user_data
+                         reason: cbValueChange)
+    recRef.cb = vpi_register_cb(addr cbData)
 
 proc disable_cb(hook: HookRecordRef) =
   ## Disable value-change callbacks on a signal by removing
