@@ -27,6 +27,10 @@ type
    top_mask: cuint                ## word-mask for most significant 32 bits
    top_msb: cuint                 ## MSB position within that word
 
+const
+  vlabDpiSuccess = 1
+  vlabDpiFailure = 0
+
 var
   # A single list of hook_records that have value changes yet to be handled
   changeList: HookRecord
@@ -108,7 +112,7 @@ proc toggle_notifier(): cint =
   if notifier == nil:
     # Throw an error and return FALSE if there's no notifier set up.
     stop_on_error("Value-change callback but no active notifier bit")
-    return 0
+    return vpiCbFailure
   else:
     var
       value_s = s_vpi_value(format: vpiScalarVal)
@@ -118,7 +122,7 @@ proc toggle_notifier(): cint =
                            else:
                              vpi1
     discard vpi_put_value(notifier, addr value_s, nil, vpiNoDelay)
-    return 1
+    return vpiCbSuccess
 
 proc vc_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
   ## This is the function that is provided to the VPI as a
@@ -128,7 +132,7 @@ proc vc_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
   let
     hook = chandle_to_hook(cast[pointer](cbDataPtr[].user_data))
   if hook == nil:
-    return 0
+    return vpiCbFailure
 
   # At any given time, the first signal that suffers a value-change
   # callback will cause the notifier signal to be toggled.  Subsequent
@@ -151,7 +155,7 @@ proc vc_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
     # Toggle the notifier bit.
     return toggle_notifier()
   else:
-    return 1
+    return vpiCbSuccess
 
 proc enable_cb(hook: HookRecord) =
   ## Sensitise to a signal by placing a value-change callback on it.
@@ -275,8 +279,6 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   ## result is zero-extended if the signal is unsigned, and
   ## sign-extended in the standard Verilog 4-state way if the signal
   ## is signed.
-  ## Returns 1 if success, 0 if failure (bad handle, chunk
-  ## out-of-bounds).
   var
     chunk = chunk
   let
@@ -285,11 +287,11 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
 
   if hook == nil:
     stop_on_error("vlab_probes_getValue32: bad handle")
-    return 0
+    return vlabDpiFailure
 
   if chunk < 0:
     report_error("vlab_probes_getValue32: negative chunk index")
-    return 0
+    return vlabDpiFailure
 
   if chunk_lsb >= hook.size:
     chunk = (hook.size - 1) shr 5 # div by 32
@@ -327,16 +329,14 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
         if msbAval == 1:
           resultPtr[].aval = resultPtr[].aval or (not hook.top_mask)
     dbg &"size {hook.size}: result after: aval = {resultPtr[].aval:#x}, bval = {resultPtr[].aval:#x}"
-
-  return 1
+  return vlabDpiSuccess
 
 proc vlab_probes_getSize(hnd: pointer): cint {.exportc, dynlib.} =
   ## Get the number of bits in the signal referenced by `hnd`.
-  ## Returns zero if the handle is bad.
   let
     hook = chandle_to_hook(hnd)
   if hook == nil:
-    return 0
+    return 0 # return size as 0 if hook is nil
   return hook.size
 
 proc vlab_probes_getSigned(hnd: pointer): cint {.exportc, dynlib.} =
@@ -345,7 +345,7 @@ proc vlab_probes_getSigned(hnd: pointer): cint {.exportc, dynlib.} =
   let
     hook = chandle_to_hook(hnd)
   if hook == nil:
-    return 0
+    return 0 # return unsigned by default if hook is nil
   return hook.isSigned.cint
 
 proc vlab_probes_specifyNotifier(fullname: cstring): cint {.exportc, dynlib.} =
@@ -359,15 +359,15 @@ proc vlab_probes_specifyNotifier(fullname: cstring): cint {.exportc, dynlib.} =
   # If there was a problem, return nil to report it.
   if obj == nil:
     report_error("vlab_probes_specifyNotifier() could not locate requested signal")
-    return 0
+    return vlabDpiFailure
 
   # Check the object is indeed a variable of type bit; error if not.
   if vpi_get(vpiType, obj) != vpiBitVar:
     report_error("vlab_probes_specifyNotifier(): object is not a bit variable")
-    return 0
+    return vlabDpiFailure
 
   notifier = obj
-  return 1
+  return vlabDpiSuccess
 
 proc vlab_probes_processChangeList() {.exportc, dynlib.} =
   ## When the SV notifier signal is toggled, the SV code must immediately
