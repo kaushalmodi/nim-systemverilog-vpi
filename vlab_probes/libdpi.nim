@@ -151,9 +151,15 @@ proc action_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
   ## The callback function used to deal with simulator actions.
   ## Currently it handles only cbStartOfReset, which is caused by
   ## an interactive restart of the simulation back to time zero.
-  if cbDataPtr[].reason == cbStartOfReset:
+  case cbDataPtr[].reason
+  of cbStartOfReset:
+    # FIXME: Seems like Xcelium never triggers cbStartOfReset cb??
+    # Thu May 20 09:16:48 EDT 2021 - kmodi
+    vpiEcho &"Running cbStartOfReset callback"
     vpiEcho "\n\n*I,VLAB_PROBE: cbStartOfReset, deallocate all internal data\n"
     free_everything()
+  else:
+    discard
   return 1
 
 proc setup_reset_callback() =
@@ -164,17 +170,9 @@ proc setup_reset_callback() =
     discard vpi_remove_cb(reset_callback)
 
   var
-    # Time and value objects should not be needed, but Xcelium requires them
-    time_s = s_vpi_time(`type`: vpiSuppressTime)
-    value_s = s_vpi_value(format: vpiSuppressVal)
-    # Set up the new callback
-    cb_data = s_cb_data(cb_rtn: action_callback,
-                        obj: nil,
-                        user_data: nil,
-                        time: addr time_s,
-                        value: addr value_s,
-                        reason: cbStartOfReset)
-  reset_callback = vpi_register_cb(addr cb_data)
+    cbData = s_cb_data(cb_rtn: action_callback,
+                       reason: cbStartOfReset)
+  reset_callback = vpi_register_cb(addr cbData)
 
 
 ## Static (file-local) helper functions related to value-change callbacks
