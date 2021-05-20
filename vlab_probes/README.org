@@ -34,3 +34,17 @@ make
 #+end_example
 This overrides the "Compilation" instructions in [[./orig/README][the original code's
 README]].
+
+* Nim code
+The code in [[./libdpi.nim][libdpi.nim]] started off as a direct port of the original C
+code. But then progressively, the code got trimmed as I used more Nim
+features to replace the busy work needed in C. Some of those are the
+use of Nim ~ref Object~ instead to replace the C struct, no extra
+header stubs.. just using the ~{.exportc, dynlib.}~ pragma, more
+concise print message syntax, better ~case~ statement, fun operators
+like ~in~ and ~notin~ and much more :)
+
+To run that, just run:
+#+begin_example
+make
+#+end_example
