@@ -315,10 +315,17 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
     resultPtr[].aval = resultPtr[].aval and hook.top_mask
     resultPtr[].bval = resultPtr[].bval and hook.top_mask
     if hook.isSigned:
-      if (resultPtr[].bval and hook.top_msb) != 0:
-        resultPtr[].bval = resultPtr[].bval or (not hook.top_mask)
-      if (resultPtr[].aval and hook.top_msb) != 0:
-        resultPtr[].aval = resultPtr[].aval or (not hook.top_mask)
+      let
+        msbBval = resultPtr[].bval and hook.top_msb
+      # aval/bval encoding: 00=0, 10=1, 11=X, 01=Z
+      #                                  ^     ^
+      # There is no point to sign-extend if the MSB bit is X or Z i.e. if MSB bit's bval is 1.
+      if msbBval == 0:
+        let
+          msbAval = resultPtr[].aval and hook.top_msb
+        # We need to sign-extend only if the MSB bit is negative i.e. == 1 (aval/bval = 10)
+        if msbAval == 1:
+          resultPtr[].aval = resultPtr[].aval or (not hook.top_mask)
     dbg &"size {hook.size}: result after: aval = {resultPtr[].aval:#x}, bval = {resultPtr[].aval:#x}"
 
   return 1
