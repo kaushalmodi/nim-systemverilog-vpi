@@ -17,13 +17,13 @@ type
   HookRecord = ref object
    allHooks_link: HookRecord      ## linked list pointer - all records
    changeList_link: HookRecord    ## linked list pointer - records awaiting processing
-   on_changeList: cint            ## 1 if we're on the list, 0 if not
+   on_changeList: bool            ## true if we're on the list, false if not
    check {.cursor.}: HookRecord   ## copy of self-pointer, for safety
    obj: VpiHandle                 ## reference to the monitored signal
    sv_key: cint                   ## unique key to help SV find this
    cb: VpiHandle                  ## VPI value-change callback object
    size: cint                     ## number of bits in the signal
-   isSigned: cint                 ## is the signal signed?
+   isSigned: bool                 ## is the signal signed?
    top_mask: cuint                ## word-mask for most significant 32 bits
    top_msb: cuint                 ## MSB position within that word
 
@@ -35,8 +35,6 @@ var
   # VPI handle to the single bit that is toggled to notify SV of pending
   # value-changes that require service
   notifier: VpiHandle
-  # VPI handle to the simulation reset callback
-  reset_callback: VpiHandle
 
 
 ## Static (file-local) helper functions
@@ -65,7 +63,7 @@ proc newHookRecord(): HookRecord =
   ## Add it to the allHooks structure to support memory
   ## deallocation on simulator restart.
   let
-    hook = HookRecord(on_changeList: 0.cint,
+    hook = HookRecord(on_changeList: false,
                       allHooks_link: allHooks) # Linking all the hooks prevents the GC from collecting those prematurely
   dbg "newHookRecord: hook addr = " & $cast[int](hook).toHex()
   hook.check = hook
@@ -81,15 +79,15 @@ proc changeList_pop(): HookRecord =
     hook = changeList
   if hook != nil:
     changeList = hook.changeList_link
-    hook.on_changeList = 0
+    hook.on_changeList = false
   return hook
 
 proc changeList_pushIfNeeded(hook: HookRecord) =
   ## Add a signal to the list of unserviced value changes.
   ## But if the signal is already on that list, don't
   ## try to add it again.
-  if hook.on_changeList == 0.cint:
-    hook.on_changeList = 1
+  if not hook.on_changeList:
+    hook.on_changeList = true
     hook.changeList_link = changeList
     changeList = hook
 
@@ -230,7 +228,7 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
     return nil
 
   hook.obj      = obj
-  hook.isSigned = vpi_get(vpiSigned, obj)
+  hook.isSigned = vpi_get(vpiSigned, obj) == 1
   hook.size     = vpi_get(vpiSize, obj)
   hook.sv_key   = sv_key
   hook.cb       = nil
@@ -321,7 +319,7 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
     dbg &"size {hook.size}: result before: aval = {resultPtr[].aval:#x}, bval = {resultPtr[].aval:#x}"
     resultPtr[].aval = resultPtr[].aval and hook.top_mask
     resultPtr[].bval = resultPtr[].bval and hook.top_mask
-    if hook.isSigned == 1:
+    if hook.isSigned:
       if resultPtr[].bval == 1 and hook.top_msb == 1:
         resultPtr[].bval = resultPtr[].bval or not hook.top_mask
       if resultPtr[].aval == 1 and hook.top_msb == 1:
@@ -346,7 +344,7 @@ proc vlab_probes_getSigned(hnd: pointer): cint {.exportc, dynlib.} =
     hook = chandle_to_hook(hnd)
   if hook == nil:
     return 0
-  return hook.isSigned
+  return hook.isSigned.cint
 
 proc vlab_probes_specifyNotifier(fullname: cstring): cint {.exportc, dynlib.} =
   ## Here's how we get the value change information back in to SV.
