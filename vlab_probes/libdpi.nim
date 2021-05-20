@@ -202,9 +202,7 @@ proc vc_callback(cbDataPtr: p_cb_data): cint {.cdecl.} =
   ## Each callback's user_data field holds a pointer to the
   ## corresponding signal's hook_record structure.
   let
-    # user_data (cstring) -$-> string -parseInt-> int -cast-> pointer
-    hook = chandle_to_hook(cast[pointer](parseInt($cbDataPtr[].user_data)))
-
+    hook = chandle_to_hook(cast[pointer](cbDataPtr[].user_data))
   if hook == nil:
     return 0
 
@@ -238,13 +236,10 @@ proc enable_cb(recRef: HookRecordRef) =
   ## of the callback handle in the signal's hook record, to simplify
   ## later removal of the callback.
   if recRef.cb == nil:
-    let
-      recRefCstring: cstring = $cast[int](recRef)
     var
-      # Set up the new callback
       cbData = s_cb_data(cb_rtn: vc_callback,
                          obj: recRef.obj,
-                         user_data: recRefCstring, # save the stringified ref address as user_data
+                         user_data: cast[cstring](recRef),
                          reason: cbValueChange)
     recRef.cb = vpi_register_cb(addr cbData)
 
