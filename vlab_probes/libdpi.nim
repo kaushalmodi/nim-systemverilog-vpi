@@ -389,7 +389,7 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
     return 0
 
   if chunk_lsb >= recRef.size:
-    chunk = ((recRef.size - 1)/32).cint
+    chunk = (recRef.size - 1) shr 5 # div by 32
 
   # Get the whole vector value from VPI
   var
@@ -401,14 +401,10 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
     vecPtr = value_s.value.vector # type ptr t_vpi_vecval
     # vecPtrp1 = cast[ptr svLogicVecVal](cast[cint](vecPtr) + 8*chunk)
   # resultPtr = vecPtr[chunk] # This does not compile in Nim
-  let
-    vecPtrUpdated = cast[svvpi.p_vpi_vecval](cast[cint](vecPtr) + chunk)
-  resultPtr[].aval = vecPtrUpdated[].aval
-  resultPtr[].bval = vecPtrUpdated[].bval
-  #
   dbg &"size of svLogicVecVal = {sizeof(svLogicVecVal)}"
   dbg &"size {recRef.size}, chunk {chunk}: vector[0]: aval = {vecPtr[].aval:#x}, bval = {vecPtr[].aval:#x}"
   # dbg &"size {recRef.size}, chunk {chunk}: vector[1]: aval = {vecPtrp1[].aval:#x}, bval = {vecPtrp1[].aval:#x}"
+  resultPtr[] = cast[ptr svLogicVecVal](cast[cint](vecPtr) + chunk*sizeof(svLogicVecVal))[]
 
   # Perform sign extension if appropriate.
   if (chunk_lsb + 32) > recRef.size:
