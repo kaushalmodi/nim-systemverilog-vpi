@@ -66,8 +66,7 @@ proc newHookRecord(): HookRecord =
   ## deallocation on simulator restart.
   let
     hook = HookRecord(on_changeList: 0.cint,
-                        obj: nil,
-                        allHooks_link: allHooks)
+                      allHooks_link: allHooks) # Linking all the hooks prevents the GC from collecting those prematurely
   dbg "newHookRecord: hook addr = " & $cast[int](hook).toHex()
   hook.check = hook
   allHooks = hook
