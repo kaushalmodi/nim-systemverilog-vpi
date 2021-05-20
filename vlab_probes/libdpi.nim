@@ -315,10 +315,10 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
     resultPtr[].aval = resultPtr[].aval and hook.top_mask
     resultPtr[].bval = resultPtr[].bval and hook.top_mask
     if hook.isSigned:
-      if resultPtr[].bval == 1 and hook.top_msb == 1:
-        resultPtr[].bval = resultPtr[].bval or not hook.top_mask
-      if resultPtr[].aval == 1 and hook.top_msb == 1:
-        resultPtr[].aval = resultPtr[].aval or not hook.top_mask
+      if (resultPtr[].bval and hook.top_msb) != 0:
+        resultPtr[].bval = resultPtr[].bval or (not hook.top_mask)
+      if (resultPtr[].aval and hook.top_msb) != 0:
+        resultPtr[].aval = resultPtr[].aval or (not hook.top_mask)
     dbg &"size {hook.size}: result after: aval = {resultPtr[].aval:#x}, bval = {resultPtr[].aval:#x}"
 
   return 1
