@@ -58,19 +58,6 @@ proc stop_on_error(message: string) =
   report_error("Stopping.  Continue the run to see further diagnostics")
   discard vpi_control(vpiStop, 1)
 
-proc newHookRecord(): HookRecord =
-  ## Get and initialize a new s_hook_record from the heap.
-  ## Add it to the allHooks structure to support memory
-  ## deallocation on simulator restart.
-  let
-    hook = HookRecord(on_changeList: false,
-                      allHooks_link: allHooks) # Linking all the hooks prevents the GC from collecting those prematurely
-  dbg "newHookRecord: hook addr = " & $cast[int](hook).toHex()
-  hook.check = hook
-  allHooks = hook
-
-  return hook
-
 proc changeList_pop(): HookRecord =
   ## Get and remove the first (newest) entry from the
   ## list of signals with unserviced value changes.
@@ -211,7 +198,6 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
   ## i.e. it does nothing.  To make the access hook useful, it must be
   ## enabled by a suitable call to vlab_probes_setVcEnable (see below).
   let
-    hook = newHookRecord()
     obj = vpi_handle_by_name(name, nil)    # Locate the chosen object
 
   # If there was a problem, return nil to report it.
@@ -227,13 +213,22 @@ proc vlab_probes_create(name: cstring; sv_key: cint): pointer {.exportc, dynlib.
     vpiEcho &"*W,VLAB_PROBES: create(\"{name}\"): object is not a variable or net of integral type"
     return nil
 
-  hook.obj      = obj
-  hook.isSigned = vpi_get(vpiSigned, obj) == 1
-  hook.size     = vpi_get(vpiSize, obj)
-  hook.sv_key   = sv_key
-  hook.cb       = nil
-  hook.top_msb  = cuint(1) shl ((hook.size-1) mod 32)
+  let
+    hook = HookRecord(on_changeList: false,
+                      obj: obj,
+                      isSigned: vpi_get(vpiSigned, obj) == 1,
+                      size: vpi_get(vpiSize, obj),
+                      sv_key: sv_key,
+                      # Linking all the hooks prevents the GC from collecting those prematurely.
+                      # If the GC is changed for arc or any other GC to none, the auto garbage
+                      # collection stops entirely and then this allHooks_link is not needed.
+                      allHooks_link: allHooks)
+  hook.top_msb = cuint(1) shl ((hook.size-1) mod 32)
   hook.top_mask = cuint(2) * hook.top_msb - cuint(1)
+  hook.check = hook
+  allHooks = hook
+
+  dbg "hook addr = " & $cast[int](hook).toHex()
   dbg &"hook: size = {hook.size}, top_msb = {hook.top_msb:#x}, top_mask = {hook.top_mask:#x}"
   return cast[pointer](hook)
 
