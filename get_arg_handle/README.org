@@ -3,3 +3,6 @@
 This directory contains the Nim and original C versions of the
 ~$get_arg_handle_test~ example from chapter 4 of /The Verilog PLI
 Handbook/.
+
+- Running efficient version: ~make~
+- Running inefficient version: ~make NIM_DEFINES+=--define:inefficient~

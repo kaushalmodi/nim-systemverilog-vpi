@@ -1,6 +1,11 @@
 import std/[strformat]
 import svvpi
-import inefficient
+when defined(inefficient):
+  import inefficient
+  static:
+    echo "Compiling the inefficient version .."
+else:
+  import efficient
 
 vpiDefine task get_arg_handle_test:
   ## Index for the first arg is 1, and so on.
