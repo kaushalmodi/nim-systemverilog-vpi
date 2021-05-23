@@ -48,3 +48,9 @@ To run that, just run:
 #+begin_example
 make
 #+end_example
+** First time setup before running the Nim code
+#+begin_example
+nimble install https://github.com/kaushalmodi/ptr_math
+nimble install https://github.com/kaushalmodi/nim-svvpi
+nimble install svdpi
+#+end_example

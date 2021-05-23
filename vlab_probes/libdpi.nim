@@ -1,5 +1,5 @@
 import std/[strformat, strutils]
-import svdpi, svvpi
+import svdpi, svvpi, ptr_math
 
 template dbg(str: typed) =
   when defined(debug):
@@ -295,11 +295,9 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   # Copy the relevant aval/bval bits into the output argument.
   let
     vecPtr = value_s.value.vector # type ptr t_vpi_vecval
-    # vecPtrp1 = cast[ptr svLogicVecVal](cast[cint](vecPtr) + sizeof(svLogicVecVal)*1)
-  # resultPtr = vecPtr[chunk] # This does not compile in Nim
   dbg &"size {hook.size}, chunk {chunk}: vector[0]: aval = {vecPtr[].aval:#x}, bval = {vecPtr[].aval:#x}"
-  # dbg &"size {hook.size}, chunk {chunk}: vector[1]: aval = {vecPtrp1[].aval:#x}, bval = {vecPtrp1[].aval:#x}"
-  resultPtr[] = cast[ptr svLogicVecVal](cast[cint](vecPtr) + chunk*sizeof(svLogicVecVal))[]
+  ptrMath:
+    resultPtr[] = cast[svLogicVecVal](vecPtr[chunk])
 
   # Perform sign extension if appropriate.
   if (chunk_lsb + 32) > hook.size:
