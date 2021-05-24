@@ -3,3 +3,6 @@
 This directory contains a Nim/VPI implementation of
 ~$count_args~. It's inspired from the ~count_args~ VPI example in
 ~${XCELIUM_ROOT}/../inca/examples/vpi/count_args/~.
+
+- Running efficient version: ~make~
+- Running inefficient version: ~make NIM_DEFINES+=--define:inefficient~
