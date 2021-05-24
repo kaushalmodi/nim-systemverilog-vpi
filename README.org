@@ -12,7 +12,7 @@ VPI, like Cadence Xcelium.
 All examples in this repo use the Nim [[https://github.com/kaushalmodi/nim-svvpi][~svvpi~]] package. To install it,
 do:
 #+begin_example
-nimble install nim-svvpi
+nimble install svvpi
 #+end_example
 
 * Running the examples in this repo
