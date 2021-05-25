@@ -53,7 +53,7 @@ proc stop_on_error(message: string) =
   if message.len > 0:
     report_error(message)
   report_error("Stopping.  Continue the run to see further diagnostics")
-  discard vpi_control(vpiStop, 1)
+  vpi_control(vpiStop, 1)
 
 proc changeList_pop(): HookRecord =
   ## Get and remove the first (newest) entry from the
