@@ -1,5 +1,6 @@
 import std/[strformat, strutils]
-import svdpi, svvpi, ptr_math
+import svdpi, svvpi
+from ptr_math import `[]`
 
 template dbg(str: typed) =
   when defined(debug):
@@ -296,8 +297,7 @@ proc vlab_probes_getValue32(hnd: pointer; resultPtr: ptr svLogicVecVal; chunk: c
   let
     vecPtr = value_s.value.vector # type ptr t_vpi_vecval
   dbg &"size {hook.size}, chunk {chunk}: vector[0]: aval = {vecPtr[].aval:#x}, bval = {vecPtr[].aval:#x}"
-  ptrMath:
-    resultPtr[] = cast[svLogicVecVal](vecPtr[chunk])
+  resultPtr[] = cast[svLogicVecVal](vecPtr[chunk])
 
   # Perform sign extension if appropriate.
   if (chunk_lsb + 32) > hook.size:
