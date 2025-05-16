@@ -117,6 +117,7 @@ endif
 	xrun -sv $(NC_ARCH_FLAGS) \
 	  -timescale 1ns/10ps \
 	  -vpicompat 1800v2009 \
+	  -pliverbose \
 	  +define+SHM_DUMP -debug \
 	  +define+$(DEFINES) \
 	  $(SV_FILES) \
