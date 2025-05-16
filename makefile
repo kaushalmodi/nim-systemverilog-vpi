@@ -116,7 +116,7 @@ ifeq ($(NC_CLEAN), 1)
 endif
 	xrun -sv $(NC_ARCH_FLAGS) \
 	  -timescale 1ns/10ps \
-	  -vpicompat vpi1800v2009 \
+	  -vpicompat 1800v2009 \
 	  +define+SHM_DUMP -debug \
 	  +define+$(DEFINES) \
 	  $(SV_FILES) \
