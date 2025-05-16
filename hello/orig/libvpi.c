@@ -2,8 +2,9 @@
 
 #include "vpi_user.h"
 
-void hello() {
+PLI_INT32 hello(PLI_BYTE8 *user_data) {
   vpi_printf("\n\nHello!!\n\n");
+  return(0);
 }
 
 // Associate C Function with a New System Task
