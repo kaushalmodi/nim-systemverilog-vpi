@@ -83,7 +83,7 @@ proc isVerilogType(vpi_type: cint): bool =
   ## there does not seem to be any VPI property for that,
   ## so instead we must exhaustively list all known
   ## integral types.
-  return vpi_type in { vpiNet, vpiNetBit, vpiReg, vpiRegBit, vpiPartSelect,
+  return vpi_type in { vpiNet.int, vpiNetBit, vpiReg, vpiRegBit, vpiPartSelect,
                        vpiBitSelect, vpiBitVar, vpiEnumVar, vpiIntVar,
                        vpiLongIntVar, vpiShortIntVar, vpiIntegerVar, vpiByteVar }
 
