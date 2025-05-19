@@ -1,4 +1,4 @@
-# Time-stamp: <2021-05-19 20:47:19 kmodi>
+# Time-stamp: <2025-05-15 16:24:37 kmodi>
 # Author    : Kaushal Modi
 
 UVM ?= 0
@@ -40,8 +40,7 @@ endif
 DEFAULT_SO ?= $(LIB_BASENAME).so
 # Possible values of NIM_COMPILES_TO: c, cpp
 NIM_COMPILES_TO ?= cpp
-# See ./gc_crash_debug/README.org on why --gc:none is the default.
-NIM_GC ?= arc
+NIM_MM ?=
 NIM_RELEASE ?= 1
 NIM_DEFINES ?=
 NIM_SWITCHES ?=
@@ -85,8 +84,8 @@ endif
 ifeq ($(VALG), 1)
 	$(eval NIM_DEFINES += -d:useSysAssert -d:useGcAssert)
 endif
-ifneq ($(NIM_GC),)
-	$(eval NIM_SWITCHES += --gc:$(NIM_GC))
+ifneq ($(NIM_MM),)
+	$(eval NIM_SWITCHES += --mm:$(NIM_MM))
 endif
 	$(NIM) $(NIM_COMPILES_TO) --out:$(ARCH_SO) --app:lib \
 	  --nimcache:./.nimcache \
