@@ -1,6 +1,3 @@
-# Time-stamp: <2021-05-19 20:47:19 kmodi>
-# Author    : Kaushal Modi
-
 UVM ?= 0
 
 LIB_BASENAME ?= libvpi
@@ -40,8 +37,7 @@ endif
 DEFAULT_SO ?= $(LIB_BASENAME).so
 # Possible values of NIM_COMPILES_TO: c, cpp
 NIM_COMPILES_TO ?= cpp
-# See ./gc_crash_debug/README.org on why --gc:none is the default.
-NIM_GC ?= arc
+NIM_MM ?=
 NIM_RELEASE ?= 1
 NIM_DEFINES ?=
 NIM_SWITCHES ?=
@@ -85,8 +81,8 @@ endif
 ifeq ($(VALG), 1)
 	$(eval NIM_DEFINES += -d:useSysAssert -d:useGcAssert)
 endif
-ifneq ($(NIM_GC),)
-	$(eval NIM_SWITCHES += --gc:$(NIM_GC))
+ifneq ($(NIM_MM),)
+	$(eval NIM_SWITCHES += --mm:$(NIM_MM))
 endif
 	$(NIM) $(NIM_COMPILES_TO) --out:$(ARCH_SO) --app:lib \
 	  --nimcache:./.nimcache \
@@ -116,8 +112,10 @@ ifeq ($(NC_CLEAN), 1)
 	$(eval NC_SWITCHES += -clean)
 endif
 	xrun -sv $(NC_ARCH_FLAGS) \
+	  -L. \
 	  -timescale 1ns/10ps \
-	  -vpicompat vpi1800v2009 \
+	  -vpicompat 1800v2009 \
+	  -pliverbose \
 	  +define+SHM_DUMP -debug \
 	  +define+$(DEFINES) \
 	  $(SV_FILES) \
@@ -129,7 +127,13 @@ endif
 # -I$(XCELIUM_ROOT)/../include for "vpi_user.h"
 clib:
 	@find . \( -name *.o -o -name $(ARCH_SO) \) -delete
-	gcc -c -fPIC -I$(XCELIUM_ROOT)/../include -DVPI_COMPATIBILITY_VERSION_1800v2009 $(C_FILES) $(GCC_ARCH_FLAG)
+	gcc \
+	  -c \
+	  -fPIC \
+	  -I$(XCELIUM_ROOT)/../include \
+      -DVPI_COMPATIBILITY_VERSION_1800v2009 \
+	  $(C_FILES) \
+	  $(GCC_ARCH_FLAG)
 	gcc -shared -Wl,-soname,$(DEFAULT_SO) $(GCC_ARCH_FLAG) *.o -o $(ARCH_SO)
 	@rm -f *.o
 

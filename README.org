@@ -37,6 +37,7 @@ functionally, or just for coding consistency.
 - [[https://sutherland-hdl.com/books/pli_book_files/pli_handbook_examples_unix.tar][C examples from /The Verilog PLI Handbook/]]
 - Cadence Xcelium VPI examples in ~${XCELIUM_ROOT}/../inca/examples/vpi/~
 * Versions tested
-- Cadence Xcelium :: 20.09-s09
-- OS :: CentOS 7.6
-- Nim :: 1.5.1 as of 2021-04-30 Fri.
+- Cadence Xcelium :: 25.03-s01
+- OS :: CentOS 8.8
+- Nim :: 2.2.4
+- GCC :: 14.2.0
