@@ -1,6 +1,3 @@
-# Time-stamp: <2025-05-16 11:46:25 kmodi>
-# Author    : Kaushal Modi
-
 UVM ?= 0
 
 LIB_BASENAME ?= libvpi
@@ -115,6 +112,7 @@ ifeq ($(NC_CLEAN), 1)
 	$(eval NC_SWITCHES += -clean)
 endif
 	xrun -sv $(NC_ARCH_FLAGS) \
+	  -L. \
 	  -timescale 1ns/10ps \
 	  -vpicompat 1800v2009 \
 	  -pliverbose \
